@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>API Key Manager</title>
+    <link href="style.css" rel="stylesheet">
+</head>
+
+<body class="flex items-center justify-center">
+    <div id="body" class="p-4 rounded-2xl w-80 space-y-2">
+        <form class="space-y-2">
+            <h1 class="text-xl font-semibold text-gray-800">API Key Manager</h1>
+            <div class="space-y-1">
+                <label for="geminiKey" class="block text-sm font-medium text-gray-600">Gemini API Key</label>
+                <input id="geminiKey" type="text" placeholder="Enter your Gemini API Key"
+                    class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="space-y-1">
+                <label for="cloudVisionKey" class="block text-sm font-medium text-gray-600">Cloud Vision API Key</label>
+                <input id="cloudVisionKey" type="text" placeholder="Enter your Cloud Vision API Key"
+                    class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="submit" id="saveKeys"
+                class="w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600">
+                Save Keys
+            </button>
+        </form>
+        <button type="button" id="startRecording"
+            class="w-full bg-red-500 text-white py-2 rounded-lg font-medium hover:bg-red-600">
+            Start Recording
+        </button>
+    </body>
+    <script src="popup.js"></script>
+</body>
+
+</html>
