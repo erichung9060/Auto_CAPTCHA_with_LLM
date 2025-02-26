@@ -1,8 +1,16 @@
-let Gemini_API_KEY = '';
-let Cloud_Vision_API_KEY = '';
+const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+const CLOUD_VISION_API_ENDPOINT = 'https://vision.googleapis.com/v1/images:annotate';
+
+var geminiApiKey = ''
+var cloudVisionApiKey = ''
+
+chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
+    geminiApiKey = result.geminiApiKey || '';
+    cloudVisionApiKey = result.cloudVisionApiKey || '';
+});
 
 async function recognize_captcha_by_Cloud_Vision_API(base64Image) {
-    const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${Cloud_Vision_API_KEY}`, {
+    const response = await fetch(`${CLOUD_VISION_API_ENDPOINT}?key=${cloudVisionApiKey}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -30,30 +38,23 @@ async function recognize_captcha_by_Cloud_Vision_API(base64Image) {
         const data = await response.json();
         console.log(data)
 
-        if (data.error) return {Success: false, error: data.error.message}
+        if (data.error) return {isSuccess: false, error: data.error.message}
         
-        let Verification_Code = '';
-        const recognizedText = data.responses[0].textAnnotations[0]?.description;
+        let verificationCode = data.responses[0].fullTextAnnotation.text;
+        console.log(verificationCode)
+        verificationCode = verificationCode.match(/[a-zA-Z0-9]+/g).join('');
         
-        const lines = recognizedText.split('\n');
-        for (const line of lines) {
-            Verification_Code = line.match(/\d+/g).join('');
-            if (Verification_Code.length == 4) break;
-        }
+        return {isSuccess: true, verificationCode: verificationCode};
 
-        if (Verification_Code.length != 4) {
-            Verification_Code = recognizedText.match(/\d+/g).join('');
-        }
-
-        return {Success: true, Verification_Code: Verification_Code}
     } catch (error) {
-        return {Success: false, error: error}
+        console.log(error)
+        return {isSuccess: false, error: error.toString()}
     }
 }
 
 async function recognize_captcha_by_Gemini(base64Image) {
-    const prompt = 'Please analyze this CAPTCHA image and extract the 4-digit numeric code. The image contains colorful digits on a white background with some noise/distortion. Return only the numeric digits without any additional text or explanation.'
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${Gemini_API_KEY}`;
+    const prompt = 'Please analyze this CAPTCHA image. The image contains digits or numbers or words with some noise/distortion. Return only the CAPTCHA numbers or digits or words without any additional text or explanation.'
+    const apiUrl = `${GEMINI_API_ENDPOINT}?key=${geminiApiKey}`;
 
     const body = {
         contents: [
@@ -73,34 +74,74 @@ async function recognize_captcha_by_Gemini(base64Image) {
 
     const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(body)
     });
 
     try {
         const data = await response.json();
         console.log(data)
-        if (data.error) return {Success: false, error: data.error.message}
+        if (data.error) return {isSuccess: false, error: data.error.message}
 
-        const Verification_Code = data.candidates[0].content.parts[0].text.trim()
-        return {Success: true, Verification_Code: Verification_Code}
+        const verificationCode = data.candidates[0].content.parts[0].text.trim()
+        return {isSuccess: true, verificationCode: verificationCode}
     } catch (error) {
-        return {Success: false, error: error}
+        return {isSuccess: false, error: error}
+    }
+}
+
+async function recognize_captcha_by_Holey(base64Image) {
+    let url  = 'https://ocr.holey.cc/ncku';
+    let data = {base64_str: base64Image};
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data),
+    });
+
+    try {
+        const data = await response.json();
+        console.log(data)
+
+        const verificationCode = data.data;
+        return {isSuccess: true, verificationCode: verificationCode};
+    } catch (error) {
+        return {isSuccess: false, error: error.toString()}
     }
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'api_key_updated') {
-        Gemini_API_KEY = request.geminiKey;
-        Cloud_Vision_API_KEY = request.cloudVisionKey;
+    if (request.action === 'recognizeCaptcha') {
+        (async () => {
+            if (cloudVisionApiKey === '' && geminiApiKey === '') {
+                return sendResponse({
+                    isSuccess: false, 
+                    error: "Please click the extension icon and set your API key."
+                });
+            }
+
+            const response = cloudVisionApiKey !== '' ?
+                await recognize_captcha_by_Cloud_Vision_API(request.image) :
+                await recognize_captcha_by_Gemini(request.image);
+            
+            // const response = await recognize_captcha_by_Holey(request.image)
+            // console.log(response)
+            
+            if(response.isSuccess) sendResponse({isSuccess: true, verificationCode: response.verificationCode});
+            else sendResponse({isSuccess: false, error: response.error});
+        })();
+        return true;
+    }
+    if (request.action === 'apiKeyUpdated') {
+        geminiApiKey = request.geminiKey;
+        cloudVisionApiKey = request.cloudVisionKey;
 
         chrome.storage.local.set({
-            Gemini_API_KEY: Gemini_API_KEY,
-            Cloud_Vision_API_KEY: Cloud_Vision_API_KEY
+            geminiApiKey: geminiApiKey,
+            cloudVisionApiKey: cloudVisionApiKey
         });
-        console.log("update api key");
+        
+        console.log("updated api key");
         
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
             if (tabs[0]) {
@@ -110,32 +151,5 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     });
             }
         });
-    }
-    if (request.action === 'recognizeCaptcha') {
-        (async () => {
-            if (Cloud_Vision_API_KEY === '' && Gemini_API_KEY === '') {
-                await new Promise((resolve) => {
-                    chrome.storage.local.get(['Gemini_API_KEY', 'Cloud_Vision_API_KEY'], (result) => {
-                        Gemini_API_KEY = result.Gemini_API_KEY || '';
-                        Cloud_Vision_API_KEY = result.Cloud_Vision_API_KEY || '';
-                        console.log("init api key");
-                        resolve();
-                    });
-                });
-
-                if (Cloud_Vision_API_KEY === '' && Gemini_API_KEY === '') {
-                    sendResponse({Success: false, error: "Please click the extension icon and set your API key."});
-                    return;
-                }
-            }
-
-            const response = Cloud_Vision_API_KEY !== '' ?
-                await recognize_captcha_by_Cloud_Vision_API(request.image) :
-                await recognize_captcha_by_Gemini(request.image);
-            
-            if(response.Success) sendResponse({Success: true, Verification_Code: response.Verification_Code});
-            else sendResponse({Success: false, error: response.error});
-        })();
-        return true;
     }
 });
