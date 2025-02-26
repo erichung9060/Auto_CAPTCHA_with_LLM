@@ -113,19 +113,15 @@ async function recognize_captcha_by_Holey(base64Image) {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'recognizeCaptcha') {
         (async () => {
-            if (cloudVisionApiKey === '' && geminiApiKey === '') {
-                return sendResponse({
-                    isSuccess: false, 
-                    error: "Please click the extension icon and set your API key."
-                });
+            let response = null;
+            if(cloudVisionApiKey != ''){
+                response = await recognize_captcha_by_Cloud_Vision_API(request.image)
+            }else if(geminiApiKey != ''){
+                response = await recognize_captcha_by_Gemini(request.image)
+            }else{
+                response = await recognize_captcha_by_Holey(request.image)
             }
-
-            const response = cloudVisionApiKey !== '' ?
-                await recognize_captcha_by_Cloud_Vision_API(request.image) :
-                await recognize_captcha_by_Gemini(request.image);
-            
-            // const response = await recognize_captcha_by_Holey(request.image)
-            // console.log(response)
+            console.log(response)
             
             if(response.isSuccess) sendResponse({isSuccess: true, verificationCode: response.verificationCode});
             else sendResponse({isSuccess: false, error: response.error});
