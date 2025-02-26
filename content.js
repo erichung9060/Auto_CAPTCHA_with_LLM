@@ -92,8 +92,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.log("api Key Updated")
         main();
     }
-    if (request.action === "record") {
+    if (request.action === "startRecording") {
         handleRecording();
+    }
+    if (request.action === "recordDeleted") {
+        let inpSel = request.deletedData.inputSelector;
+        document.querySelector(inpSel).value = "";
     }
 });
 

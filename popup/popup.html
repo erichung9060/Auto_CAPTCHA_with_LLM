@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>API Key Manager</title>
-    <link href="style.css" rel="stylesheet">
+    <link href="tailwind.css" rel="stylesheet">
 </head>
 
 <body class="flex items-center justify-center">
@@ -26,9 +26,14 @@
                 Save Keys
             </button>
         </form>
+        <hr>
         <button type="button" id="startRecording"
-            class="w-full bg-red-500 text-white py-2 rounded-lg font-medium hover:bg-red-600">
+            class="w-full bg-green-500 text-white py-2 rounded-lg font-medium hover:bg-green-600">
             Start Recording
+        </button>
+        <button type="button" id="deleteRecord"
+            class="w-full bg-red-500 text-white py-2 rounded-lg font-medium hover:bg-red-600">
+            Delete Record On This Website
         </button>
     </body>
     <script src="popup.js"></script>

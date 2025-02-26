@@ -148,4 +148,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
         });
     }
+    if (request.action === 'deleteRecord') {
+        chrome.tabs.query({active: true, currentWindow: true}, async function(tabs) {
+            if (tabs[0]) {
+                const url = new URL(tabs[0].url);
+                const hostname = url.hostname;
+                
+                // Get data before deleting
+                const result = await chrome.storage.sync.get(hostname);
+                const data = result[hostname];
+                
+                // Send data to content script
+                await chrome.tabs.sendMessage(tabs[0].id, {
+                    action: "recordDeleted",
+                    deletedData: data
+                });
+
+                // Remove from storage
+                chrome.storage.sync.remove(hostname, () => {
+                    sendResponse({message: `Successfully deleted record for ${hostname}`});
+                });
+            }
+        });
+        return true;
+    }
 });
