@@ -4,29 +4,24 @@ chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
 });
 
 
-document.getElementById('saveKeys').addEventListener('click', async () => {
+document.getElementById('saveKeys').addEventListener('click', event => {
+    event.preventDefault(); // 阻止表單的默認提交行為
+
     const geminiKey = document.getElementById('geminiKey').value;
     const cloudVisionKey = document.getElementById('cloudVisionKey').value;
 
-    await chrome.runtime.sendMessage({ 
+    chrome.runtime.sendMessage({ 
         action: 'apiKeyUpdated', 
         geminiKey, 
         cloudVisionKey 
     });
-    // window.close();
+
+    showMessage("Successfully updated the API keys!", "green");
 });
 
 document.getElementById('startRecording').addEventListener('click',async () => {
     document.getElementById('startRecording').innerText = "Recording";
-
-    const message = document.createElement('div');
-    message.innerText = "Please click the CAPTCHA IMAGE";
-    message.style.color = "red";
-    message.style.fontWeight = "bold";
-    message.style.marginTop = "10px";
-    message.style.textAlign = "center";
-    document.getElementById('body').appendChild(message);
-
+    showMessage("Please click the CAPTCHA IMAGE", "red");
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     await chrome.tabs.sendMessage(tab.id, { action: "startRecording" });
 });
@@ -49,24 +44,24 @@ document.getElementById('deleteRecord').addEventListener('click', async () => {
 
     document.getElementById('confirmYes').addEventListener('click', async () => {
         confirmDialog.remove();
-
         let respone = await chrome.runtime.sendMessage({ action: 'deleteRecord' });
-        
-        const message_div = document.createElement('div');
-        message_div.innerText = respone.message;
-        message_div.style.color = "red";
-        message_div.style.fontWeight = "bold";
-        message_div.style.marginTop = "10px";
-        message_div.style.textAlign = "center";
-        document.getElementById('body').appendChild(message_div);
-        setTimeout(() => {
-            message_div.remove();
-        }, 8000);
-        
-        
+        showMessage(respone.message, "red");
     });
 
     document.getElementById('confirmNo').addEventListener('click', () => {
         confirmDialog.remove();
     });
 });
+
+function showMessage(message, color){
+    const message_div = document.createElement('div');
+    message_div.innerText = message;
+    message_div.style.color = color;
+    message_div.style.fontWeight = "bold";
+    message_div.style.marginTop = "10px";
+    message_div.style.textAlign = "center";
+    document.getElementById('body').appendChild(message_div);
+    setTimeout(() => {
+        message_div.remove();
+    }, 10 * 1000);
+}

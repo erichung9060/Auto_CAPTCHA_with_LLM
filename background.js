@@ -158,13 +158,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const result = await chrome.storage.sync.get(hostname);
                 const data = result[hostname];
                 
-                // Send data to content script
+                if(!data){
+                    sendResponse({message: `No record found for ${hostname}`});
+                }
+
                 await chrome.tabs.sendMessage(tabs[0].id, {
                     action: "recordDeleted",
                     deletedData: data
                 });
 
-                // Remove from storage
                 chrome.storage.sync.remove(hostname, () => {
                     sendResponse({message: `Successfully deleted record for ${hostname}`});
                 });
