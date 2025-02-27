@@ -164,7 +164,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                 await chrome.tabs.sendMessage(tabs[0].id, {
                     action: "recordDeleted",
-                    deletedData: data
+                    data: data
                 });
 
                 chrome.storage.sync.remove(hostname, () => {

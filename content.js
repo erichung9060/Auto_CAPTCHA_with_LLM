@@ -1,3 +1,6 @@
+// 全局變量來存儲事件處理函數
+let handleCaptchaLoad = null;
+
 function getBase64Image(img) {
     const canvas = document.createElement('canvas');
     canvas.width = img.naturalWidth;
@@ -62,26 +65,29 @@ main();
 
 
 function checkAndProcess(capSel, inpSel, observer = null) {
-    const image = document.querySelector(capSel);
+    const captcha = document.querySelector(capSel);
     const inputField = document.querySelector(inpSel);
     
-    if (image && inputField) {
-        console.log("Find Captcha Image now, processing...")
+    if (captcha && inputField) {
+        console.log("Find Captcha Image now, processing...");
         if (observer) observer.disconnect();
         
-        if (image.complete) {
-            console.log("image load completed")
-            recognizeAndFill(image, inputField);
-        }else{
-            console.log("image not yet loaded, waiting...")
+        if (captcha.complete) {
+            console.log("image load completed");
+            recognizeAndFill(captcha, inputField);
+        } else {
+            console.log("image not yet loaded, waiting...");
         }
 
-        if (!image.hasAttribute('has-load-listener')) {
-            image.addEventListener('load', () => {
-                recognizeAndFill(image, inputField);
-            });
-            image.setAttribute('has-load-listener', 'true');
+        handleCaptchaLoad = function() {
+            recognizeAndFill(captcha, inputField);
         }
+
+        if (!captcha.hasAttribute('has-load-listener')) {
+            captcha.addEventListener('load', handleCaptchaLoad);
+            captcha.setAttribute('has-load-listener', 'true');
+        }
+
         return true;
     }
     return false;
@@ -96,8 +102,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         handleRecording();
     }
     if (request.action === "recordDeleted") {
-        let inpSel = request.deletedData.inputSelector;
-        document.querySelector(inpSel).value = "";
+        const captcha = document.querySelector(request.data.captchaSelector);
+        const inputField = document.querySelector(request.data.inputSelector);
+        
+        captcha.removeEventListener('load', handleCaptchaLoad);
+        captcha.removeAttribute('has-load-listener');
+        handleCaptchaLoad = null;
+
+        inputField.value = "";
+
     }
 });
 
@@ -139,7 +152,6 @@ function getElementSelector(element) {
         return `#${element.id}`;
     }
 
-    // 尋找元素的最近的有ID的祖先
     let current = element;
     const pathParts = [];
 
