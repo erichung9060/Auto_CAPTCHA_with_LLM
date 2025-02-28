@@ -1,12 +1,13 @@
 const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 const CLOUD_VISION_API_ENDPOINT = 'https://vision.googleapis.com/v1/images:annotate';
+const HOLEY_API_ENDPOINT = 'https://ocr.holey.cc/ncku';
 
 var GeminiApiKey = ''
 var CloudVisionApiKey = ''
 
 chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
-    geminiApiKey = result.geminiApiKey || '';
-    cloudVisionApiKey = result.cloudVisionApiKey || '';
+    GeminiApiKey = result.geminiApiKey || '';
+    CloudVisionApiKey = result.cloudVisionApiKey || '';
 });
 
 async function recognize_by_CloudVision(base64Image) {
@@ -51,8 +52,8 @@ async function recognize_by_CloudVision(base64Image) {
 }
 
 async function recognize_by_Gemini(base64Image) {
-    const prompt = 'Please analyze this CAPTCHA image. The image contains digits or numbers or words with some noise/distortion. Return only the CAPTCHA numbers or digits or words without any additional text or explanation.'
     const apiUrl = `${GEMINI_API_ENDPOINT}?key=${GeminiApiKey}`;
+    const prompt = 'Please analyze this CAPTCHA image. The image contains digits or numbers or words with some noise/distortion. Return only the CAPTCHA numbers or digits or words without any additional text or explanation.';
     const body = {
         contents: [
             {
@@ -80,7 +81,9 @@ async function recognize_by_Gemini(base64Image) {
         console.log("Gemini API respone:", data)
         if (data.error) return { isSuccess: false, error: data.error.message }
 
-        const verificationCode = data.candidates[0].content.parts[0].text.trim()
+        let verificationCode = data.candidates[0].content.parts[0].text.trim()
+        verificationCode = verificationCode.match(/[a-zA-Z0-9]+/g).join('');
+
         return { isSuccess: true, verificationCode: verificationCode }
     } catch (error) {
         return { isSuccess: false, error: error.toString() }
@@ -88,9 +91,9 @@ async function recognize_by_Gemini(base64Image) {
 }
 
 async function recognize_by_Holey(base64Image) {
-    let url = 'https://ocr.holey.cc/ncku';
-    let data = { base64_str: base64Image };
-    const response = await fetch(url, {
+    const apiUrl = HOLEY_API_ENDPOINT;
+    const data = { base64_str: base64Image };
+    const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -108,16 +111,13 @@ async function recognize_by_Holey(base64Image) {
 }
 
 async function recognizeCaptcha(image, sendResponse) {
-    let response;
     if (CloudVisionApiKey !== '') {
-        response = await recognize_by_CloudVision(image);
+        sendResponse(await recognize_by_CloudVision(image));
     } else if (GeminiApiKey !== '') {
-        response = await recognize_by_Gemini(image);
+        sendResponse(await recognize_by_Gemini(image));
     } else {
-        response = await recognize_by_Holey(image);
+        sendResponse(await recognize_by_Holey(image));
     }
-    console.log(response);
-    sendResponse(response);
 }
 
 async function updateApiKeys(geminiApiKey, cloudVisionApiKey, sendResponse) {
@@ -133,7 +133,11 @@ async function updateApiKeys(geminiApiKey, cloudVisionApiKey, sendResponse) {
         console.log("Updated API key", GeminiApiKey, CloudVisionApiKey)
 
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        await chrome.tabs.sendMessage(tab.id, { action: "updateApiKeys" });
+
+        await chrome.tabs.sendMessage(tab.id, { action: "updateApiKeys" }).catch(error => {
+            console.warn("Failed to send updateApiKeys message:", error);
+        });
+
         sendResponse({ isSuccess: true })
     } catch (error) {
         sendResponse({ isSuccess: false, error: error.toString() })
@@ -152,8 +156,7 @@ async function deleteRecord(tab, sendResponse) {
             sendResponse({ isSuccess: false, error: `No record found for ${hostname}` });
         } else {
             chrome.tabs.sendMessage(tab.id, {
-                action: "deleteRecord",
-                data: data
+                action: "deleteRecord"
             });
 
             await chrome.storage.local.remove(hostname);

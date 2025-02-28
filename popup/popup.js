@@ -1,7 +1,15 @@
-chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
-    document.getElementById('geminiKey').value = result.geminiApiKey || '';
-    document.getElementById('cloudVisionKey').value = result.cloudVisionApiKey || '';
-});
+function showMessage(message, color) {
+    const message_div = document.createElement('div');
+    message_div.innerText = message;
+    message_div.style.color = color;
+    message_div.style.fontWeight = "bold";
+    message_div.style.marginTop = "10px";
+    message_div.style.textAlign = "center";
+    document.getElementById('body').appendChild(message_div);
+    setTimeout(() => {
+        message_div.remove();
+    }, 10 * 1000);
+}
 
 document.getElementById('saveKeys').addEventListener('click', async event => {
     event.preventDefault();
@@ -68,15 +76,7 @@ document.getElementById('deleteRecord').addEventListener('click', async () => {
     });
 });
 
-function showMessage(message, color) {
-    const message_div = document.createElement('div');
-    message_div.innerText = message;
-    message_div.style.color = color;
-    message_div.style.fontWeight = "bold";
-    message_div.style.marginTop = "10px";
-    message_div.style.textAlign = "center";
-    document.getElementById('body').appendChild(message_div);
-    setTimeout(() => {
-        message_div.remove();
-    }, 10 * 1000);
-}
+chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
+    document.getElementById('geminiKey').value = result.geminiApiKey || '';
+    document.getElementById('cloudVisionKey').value = result.cloudVisionApiKey || '';
+});
