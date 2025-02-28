@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
     "version": "1.0",
-    "name": "Auto Captcha with LLM",
-    "description": "Automatically fill in the verification code by LLM (Gemini, Cloud Vision AI)",
+    "name": "Auto CAPTCHA with LLM",
+    "description": "Automatically fills in verification codes using LLM (Gemini, Cloud Vision AI).",
     "content_scripts": [
         {
             "matches": [
@@ -14,8 +14,7 @@
         }
     ],
     "permissions": [
-        "storage",
-        "scripting"
+        "storage"
     ],
     "host_permissions": [
         "<all_urls>"
@@ -30,15 +29,5 @@
         "16": "icons/16x16.png",
         "48": "icons/48x48.png",
         "128": "icons/128x128.png"
-    },
-    "web_accessible_resources": [
-        {
-            "resources": [
-                "injected.js"
-            ],
-            "matches": [
-                "<all_urls>"
-            ]
-        }
-    ]
+    }
 }
