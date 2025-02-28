@@ -3,31 +3,39 @@ chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
     document.getElementById('cloudVisionKey').value = result.cloudVisionApiKey || '';
 });
 
+document.getElementById('saveKeys').addEventListener('click', async event => {
+    event.preventDefault();
 
-document.getElementById('saveKeys').addEventListener('click', event => {
-    event.preventDefault(); // 阻止表單的默認提交行為
+    try {
+        const geminiApiKey = document.getElementById('geminiKey').value;
+        const cloudVisionApiKey = document.getElementById('cloudVisionKey').value;
 
-    const geminiKey = document.getElementById('geminiKey').value;
-    const cloudVisionKey = document.getElementById('cloudVisionKey').value;
+        const response = await chrome.runtime.sendMessage({
+            action: 'updateApiKeys',
+            geminiApiKey,
+            cloudVisionApiKey
+        });
 
-    chrome.runtime.sendMessage({ 
-        action: 'apiKeyUpdated', 
-        geminiKey, 
-        cloudVisionKey 
-    });
-
-    showMessage("Successfully updated the API keys!", "green");
+        if (response.isSuccess) {
+            showMessage("Successfully updated the API keys!", "green");
+        } else {
+            showMessage(response.error, "red");
+        }
+    } catch (error) {
+        showMessage(error.toString(), "red");
+    }
 });
 
-document.getElementById('startRecording').addEventListener('click',async () => {
-    document.getElementById('startRecording').innerText = "Recording";
+document.getElementById('startRecording').addEventListener('click', async () => {
+    const startRecordingButton = document.getElementById('startRecording');
+    startRecordingButton.innerText = "Recording";
+    startRecordingButton.disabled = true;
     showMessage("Please click the CAPTCHA IMAGE", "red");
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     await chrome.tabs.sendMessage(tab.id, { action: "startRecording" });
 });
 
 document.getElementById('deleteRecord').addEventListener('click', async () => {
-    // 創建確認對話框
     const confirmDialog = document.createElement('div');
     confirmDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center';
     confirmDialog.innerHTML = `
@@ -39,13 +47,20 @@ document.getElementById('deleteRecord').addEventListener('click', async () => {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(confirmDialog);
 
     document.getElementById('confirmYes').addEventListener('click', async () => {
         confirmDialog.remove();
-        let respone = await chrome.runtime.sendMessage({ action: 'deleteRecord' });
-        showMessage(respone.message, "red");
+
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab) {
+            let response = await chrome.runtime.sendMessage({ action: 'deleteRecord', tab });
+            if (response.isSuccess) showMessage(response.message, "green");
+            else showMessage(response.error, "red");
+        } else {
+            showMessage("No available tab found, please open the site you want to delete.", "red");
+        }
     });
 
     document.getElementById('confirmNo').addEventListener('click', () => {
@@ -53,7 +68,7 @@ document.getElementById('deleteRecord').addEventListener('click', async () => {
     });
 });
 
-function showMessage(message, color){
+function showMessage(message, color) {
     const message_div = document.createElement('div');
     message_div.innerText = message;
     message_div.style.color = color;

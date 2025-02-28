@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
     "version": "1.0",
-    "name": "Auto Captcha",
-    "description": "Automatically fill in the verification code",
+    "name": "Auto Captcha with LLM",
+    "description": "Automatically fill in the verification code by LLM (Gemini, Cloud Vision AI)",
     "content_scripts": [
         {
             "matches": [

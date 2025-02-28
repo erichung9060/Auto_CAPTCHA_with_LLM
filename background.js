@@ -1,61 +1,58 @@
 const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 const CLOUD_VISION_API_ENDPOINT = 'https://vision.googleapis.com/v1/images:annotate';
 
-var geminiApiKey = ''
-var cloudVisionApiKey = ''
+var GeminiApiKey = ''
+var CloudVisionApiKey = ''
 
 chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
     geminiApiKey = result.geminiApiKey || '';
     cloudVisionApiKey = result.cloudVisionApiKey || '';
 });
 
-async function recognize_captcha_by_Cloud_Vision_API(base64Image) {
-    const response = await fetch(`${CLOUD_VISION_API_ENDPOINT}?key=${cloudVisionApiKey}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            requests: [
-                {
-                    image: {
-                        content: base64Image
-                    },
-                    features: [
-                        {
-                            type: 'TEXT_DETECTION',
-                            maxResults: 1
-                        }
-                    ],
-                    imageContext: {
-                        languageHints: ['en']
+async function recognize_by_CloudVision(base64Image) {
+    const apiUrl = `${CLOUD_VISION_API_ENDPOINT}?key=${CloudVisionApiKey}`;
+    const body = {
+        requests: [
+            {
+                image: {
+                    content: base64Image
+                },
+                features: [
+                    {
+                        type: 'TEXT_DETECTION',
+                        maxResults: 1
                     }
+                ],
+                imageContext: {
+                    languageHints: ['en']
                 }
-            ]
-        })
-    })
+            }
+        ]
+    };
+    const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+
     try {
         const data = await response.json();
-        console.log(data)
+        console.log("CloudVision API respone:", data)
 
-        if (data.error) return {isSuccess: false, error: data.error.message}
-        
+        if (data.error) return { isSuccess: false, error: data.error.message }
+
         let verificationCode = data.responses[0].fullTextAnnotation.text;
-        console.log(verificationCode)
         verificationCode = verificationCode.match(/[a-zA-Z0-9]+/g).join('');
-        
-        return {isSuccess: true, verificationCode: verificationCode};
 
+        return { isSuccess: true, verificationCode: verificationCode };
     } catch (error) {
-        console.log(error)
-        return {isSuccess: false, error: error.toString()}
+        return { isSuccess: false, error: error.toString() }
     }
 }
 
-async function recognize_captcha_by_Gemini(base64Image) {
+async function recognize_by_Gemini(base64Image) {
     const prompt = 'Please analyze this CAPTCHA image. The image contains digits or numbers or words with some noise/distortion. Return only the CAPTCHA numbers or digits or words without any additional text or explanation.'
-    const apiUrl = `${GEMINI_API_ENDPOINT}?key=${geminiApiKey}`;
-
+    const apiUrl = `${GEMINI_API_ENDPOINT}?key=${GeminiApiKey}`;
     const body = {
         contents: [
             {
@@ -74,104 +71,111 @@ async function recognize_captcha_by_Gemini(base64Image) {
 
     const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
     });
 
     try {
         const data = await response.json();
-        console.log(data)
-        if (data.error) return {isSuccess: false, error: data.error.message}
+        console.log("Gemini API respone:", data)
+        if (data.error) return { isSuccess: false, error: data.error.message }
 
         const verificationCode = data.candidates[0].content.parts[0].text.trim()
-        return {isSuccess: true, verificationCode: verificationCode}
+        return { isSuccess: true, verificationCode: verificationCode }
     } catch (error) {
-        return {isSuccess: false, error: error}
+        return { isSuccess: false, error: error.toString() }
     }
 }
 
-async function recognize_captcha_by_Holey(base64Image) {
-    let url  = 'https://ocr.holey.cc/ncku';
-    let data = {base64_str: base64Image};
+async function recognize_by_Holey(base64Image) {
+    let url = 'https://ocr.holey.cc/ncku';
+    let data = { base64_str: base64Image };
     const response = await fetch(url, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
     });
 
     try {
         const data = await response.json();
-        console.log(data)
+        console.log("Holey API respone:", data)
 
         const verificationCode = data.data;
-        return {isSuccess: true, verificationCode: verificationCode};
+        return { isSuccess: true, verificationCode: verificationCode };
     } catch (error) {
-        return {isSuccess: false, error: error.toString()}
+        return { isSuccess: false, error: error.toString() }
+    }
+}
+
+async function recognizeCaptcha(image, sendResponse) {
+    let response;
+    if (CloudVisionApiKey !== '') {
+        response = await recognize_by_CloudVision(image);
+    } else if (GeminiApiKey !== '') {
+        response = await recognize_by_Gemini(image);
+    } else {
+        response = await recognize_by_Holey(image);
+    }
+    console.log(response);
+    sendResponse(response);
+}
+
+async function updateApiKeys(geminiApiKey, cloudVisionApiKey, sendResponse) {
+    try {
+        GeminiApiKey = geminiApiKey
+        CloudVisionApiKey = cloudVisionApiKey
+
+        await chrome.storage.local.set({
+            geminiApiKey: geminiApiKey,
+            cloudVisionApiKey: cloudVisionApiKey
+        });
+
+        console.log("Updated API key", GeminiApiKey, CloudVisionApiKey)
+
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        await chrome.tabs.sendMessage(tab.id, { action: "updateApiKeys" });
+        sendResponse({ isSuccess: true })
+    } catch (error) {
+        sendResponse({ isSuccess: false, error: error.toString() })
+    }
+}
+
+async function deleteRecord(tab, sendResponse) {
+    try {
+        const url = new URL(tab.url);
+        const hostname = url.hostname;
+
+        const result = await chrome.storage.local.get(hostname);
+        const data = result[hostname];
+
+        if (!data) {
+            sendResponse({ isSuccess: false, error: `No record found for ${hostname}` });
+        } else {
+            chrome.tabs.sendMessage(tab.id, {
+                action: "deleteRecord",
+                data: data
+            });
+
+            await chrome.storage.local.remove(hostname);
+            sendResponse({ isSuccess: true, message: `Successfully deleted record for ${hostname}` });
+        }
+    } catch (error) {
+        sendResponse({ isSuccess: false, error: error.toString() });
     }
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'recognizeCaptcha') {
-        (async () => {
-            let response = null;
-            if(cloudVisionApiKey != ''){
-                response = await recognize_captcha_by_Cloud_Vision_API(request.image)
-            }else if(geminiApiKey != ''){
-                response = await recognize_captcha_by_Gemini(request.image)
-            }else{
-                response = await recognize_captcha_by_Holey(request.image)
-            }
-            console.log(response)
-            
-            if(response.isSuccess) sendResponse({isSuccess: true, verificationCode: response.verificationCode});
-            else sendResponse({isSuccess: false, error: response.error});
-        })();
-        return true;
-    }
-    if (request.action === 'apiKeyUpdated') {
-        geminiApiKey = request.geminiKey;
-        cloudVisionApiKey = request.cloudVisionKey;
+    switch (request.action) {
+        case 'recognizeCaptcha':
+            recognizeCaptcha(request.image, sendResponse);
+            return true;
 
-        chrome.storage.local.set({
-            geminiApiKey: geminiApiKey,
-            cloudVisionApiKey: cloudVisionApiKey
-        });
-        
-        console.log("updated api key");
-        
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            if (tabs[0]) {
-                chrome.tabs.sendMessage(tabs[0].id, {action: "apiKeyUpdated"})
-                    .catch(error => {
-                        console.log(error);
-                    });
-            }
-        });
-    }
-    if (request.action === 'deleteRecord') {
-        chrome.tabs.query({active: true, currentWindow: true}, async function(tabs) {
-            if (tabs[0]) {
-                const url = new URL(tabs[0].url);
-                const hostname = url.hostname;
-                
-                // Get data before deleting
-                const result = await chrome.storage.sync.get(hostname);
-                const data = result[hostname];
-                
-                if(!data){
-                    sendResponse({message: `No record found for ${hostname}`});
-                }
+        case 'updateApiKeys':
+            updateApiKeys(request.geminiApiKey, request.cloudVisionApiKey, sendResponse);
+            return true;
 
-                await chrome.tabs.sendMessage(tabs[0].id, {
-                    action: "recordDeleted",
-                    data: data
-                });
-
-                chrome.storage.sync.remove(hostname, () => {
-                    sendResponse({message: `Successfully deleted record for ${hostname}`});
-                });
-            }
-        });
-        return true;
+        case 'deleteRecord':
+            deleteRecord(request.tab, sendResponse);
+            return true;
     }
 });

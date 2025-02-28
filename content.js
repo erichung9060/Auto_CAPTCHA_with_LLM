@@ -1,4 +1,3 @@
-// 全局變量來存儲事件處理函數
 let handleCaptchaLoad = null;
 
 function getBase64Image(img) {
@@ -12,22 +11,16 @@ function getBase64Image(img) {
     return canvas.toDataURL('image/png').split(',')[1];
 }
 
-
 async function recognizeAndFill(image, inputField) {
     let base64Image = getBase64Image(image)
-    const response = await new Promise((resolve) => {
-        chrome.runtime.sendMessage(
-            { action: "recognizeCaptcha", image: base64Image },
-            (response) => {
-                resolve(response);
-            }
-        );
+    const response = await chrome.runtime.sendMessage({ 
+        action: "recognizeCaptcha", 
+        image: base64Image
     });
 
     console.log(response)
 
     if (response.isSuccess) {
-        console.log("fill in:", response.verificationCode)
         inputField.value = response.verificationCode;
     } else {
         console.error(response.error);
@@ -36,20 +29,15 @@ async function recognizeAndFill(image, inputField) {
 }
 
 async function main() {
-    const result = await chrome.storage.sync.get(window.location.hostname);
+    const result = await chrome.storage.local.get(window.location.hostname);
     const data = result[window.location.hostname];
-    if(!data){
-        console.log("[Auto Captcha] No record yet.")
-        return;
-    }
+    if(!data) return;
 
-    console.log(data)
     let capSel = data.captchaSelector;
     let inpSel = data.inputSelector;
 
     let suc = checkAndProcess(capSel, inpSel);
     if(!suc){
-        console.log("Can not find Captcha Image now, waiting...");
         const observer = new MutationObserver((mutations, obs) => {
             checkAndProcess(capSel, inpSel, obs);
         });
@@ -59,24 +47,19 @@ async function main() {
             subtree: true
         });
     }
-    
 }
 main();
 
-
 function checkAndProcess(capSel, inpSel, observer = null) {
+    console.log("checking")
     const captcha = document.querySelector(capSel);
     const inputField = document.querySelector(inpSel);
     
     if (captcha && inputField) {
-        console.log("Find Captcha Image now, processing...");
         if (observer) observer.disconnect();
         
         if (captcha.complete) {
-            console.log("image load completed");
             recognizeAndFill(captcha, inputField);
-        } else {
-            console.log("image not yet loaded, waiting...");
         }
 
         handleCaptchaLoad = function() {
@@ -94,14 +77,13 @@ function checkAndProcess(capSel, inpSel, observer = null) {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "apiKeyUpdated") {
-        console.log("api Key Updated")
+    if (request.action === "updateApiKeys") {
         main();
     }
     if (request.action === "startRecording") {
         handleRecording();
     }
-    if (request.action === "recordDeleted") {
+    if (request.action === "deleteRecord") {
         const captcha = document.querySelector(request.data.captchaSelector);
         const inputField = document.querySelector(request.data.inputSelector);
         
@@ -110,7 +92,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         handleCaptchaLoad = null;
 
         inputField.value = "";
-
     }
 });
 
@@ -121,12 +102,12 @@ async function handleRecording() {
     const recordingHandler = (event) => {
         if (!selectedCaptcha) {
             selectedCaptcha = event.target;
-            alert("Please click the CAPTCHA INPUT FIELD");
+            alert("Got the CAPTCHA image successfully. Now please click the input field for the CAPTCHA code.");
         } else {
             selectedInput = event.target;
             saveSelectors(selectedCaptcha, selectedInput);
             document.removeEventListener("click", recordingHandler, true);
-            alert("Successful!");
+            alert("Got the input field successfully. The Captcha code will be filled in automatically.");
         }
     };
 
@@ -134,7 +115,7 @@ async function handleRecording() {
 }
 
 function saveSelectors(selectedCaptcha, selectedInput) {
-    chrome.storage.sync.set({
+    chrome.storage.local.set({
         [window.location.hostname]: {
             captchaSelector: getElementSelector(selectedCaptcha),
             inputSelector: getElementSelector(selectedInput)
@@ -181,4 +162,3 @@ function getElementSelector(element) {
 
     return pathParts.join(' > ');
 }
-
