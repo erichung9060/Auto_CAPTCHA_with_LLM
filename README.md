@@ -1,13 +1,12 @@
 # Auto CAPTCHA with LLM
 
-A chrome extension for automatically solves CAPTCHAs and fills the verification code using LLM (Gemini, Cloud Vision AI). Save time and frustration on your favorite websites!
-
+A chrome extension for automatically solves CAPTCHAs and fills the verification code using LLM (Gemini, Cloud Vision AI) on any websites.
 
 ## Features
 
-*   **Automatic CAPTCHA Solving:** Once configured for a website, the extension automatically detects CAPTCHA images, analyzes them using LLM, and fills in the corresponding verification code in the designated input field.
+*   **Auto CAPTCHA Solving:** Detects CAPTCHA images, analyzes them with LLM, and fills in the code automatically.
 
-*   **Smart Recording:** Easily teach the extension which image is the CAPTCHA and which input field is for the code on any website. Just click the "Start Recording" button, select the CAPTCHA image, and then click the input field. The extension remembers your choices for future visits.
+*   **Smart Recording:** Customize the CAPTCHA image and input field for any website, and the extension will auto-fill the verification code on your next visit.
 
 ## Customizable AI Models
 
