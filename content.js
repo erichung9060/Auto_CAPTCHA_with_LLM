@@ -31,6 +31,7 @@ async function handleRecording() {
     const recordingHandler = (event) => {
         if (!selectedCaptcha) {
             selectedCaptcha = event.target;
+            console.log(selectedCaptcha);
 
             if (!(selectedCaptcha instanceof HTMLImageElement)) {
                 alert("Please select a valid CAPTCHA image.");
@@ -41,6 +42,7 @@ async function handleRecording() {
             
         } else {
             selectedInput = event.target;
+            console.log(selectedInput);
 
             updateAutoCaptchaData(selectedCaptcha, selectedInput);
             document.removeEventListener("click", recordingHandler, true);
@@ -110,7 +112,7 @@ async function recognizeAndFill() {
     if (response.isSuccess) {
         inputField.value = response.verificationCode;
     } else {
-        console.error("Backend Error: ", response)
+        console.error("Backend Error: ", response.error)
         inputField.value = "";
     }
 }

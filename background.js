@@ -90,25 +90,6 @@ async function recognize_by_Gemini(base64Image) {
     }
 }
 
-async function recognize_by_Holey(base64Image) {
-    const apiUrl = HOLEY_API_ENDPOINT;
-    const data = { base64_str: base64Image };
-    const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-    });
-
-    try {
-        const data = await response.json();
-        console.log("Holey API respone:", data)
-
-        const verificationCode = data.data;
-        return { isSuccess: true, verificationCode: verificationCode };
-    } catch (error) {
-        return { isSuccess: false, error: error.toString() }
-    }
-}
 
 async function recognizeCaptcha(image, sendResponse) {
     if (CloudVisionApiKey !== '') {
@@ -116,7 +97,7 @@ async function recognizeCaptcha(image, sendResponse) {
     } else if (GeminiApiKey !== '') {
         sendResponse(await recognize_by_Gemini(image));
     } else {
-        sendResponse(await recognize_by_Holey(image));
+        sendResponse({ isSuccess: false, error: "No API key found" });
     }
 }
 
