@@ -20,7 +20,7 @@ A chrome extension for automatically solves CAPTCHAs and fills the verification 
 
 1.  **Install the Extension on [Chrome Web Store](https://chromewebstore.google.com/detail/auto-captcha-with-llm/opmhaocokfchpadepjolomhlgeopjdgo)**
 
-2.  **Configure API Keys (Optional):**
+2.  **Configure API Keys:**
     *   Click the extension icon in the toolbar to open the popup.
     *   Enter your Gemini API key or Cloud Vision API key.
     *   Click "Save Keys".
