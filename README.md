@@ -18,7 +18,7 @@ A chrome extension for automatically solves CAPTCHAs and fills the verification 
 
 ## How to Use
 
-1.  **Install the Extension:** Add "Auto CAPTCHA Solver with LLM" to your Chrome browser.
+1.  **Install the Extension on [Chrome Web Store](https://chromewebstore.google.com/detail/auto-captcha-with-llm/opmhaocokfchpadepjolomhlgeopjdgo)**
 
 2.  **Configure API Keys (Optional):**
     *   Click the extension icon in the toolbar to open the popup.
