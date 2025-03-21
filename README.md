@@ -2,6 +2,12 @@
 
 A chrome extension for automatically solves CAPTCHAs and fills the verification code using LLM (Gemini, Cloud Vision AI) on any websites.
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/494a2ccd-13e9-479d-8cfd-ec4822fe5f96" width="49%">
+  <img src="https://github.com/user-attachments/assets/dde6527e-9c52-4b05-85b3-651ca97b29a7" width="49%">
+</p>
+
+
 ## Features
 
 *   **Auto CAPTCHA Solving:** Detects CAPTCHA images, analyzes them with LLM, and fills in the code automatically.
