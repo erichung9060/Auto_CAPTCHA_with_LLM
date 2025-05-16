@@ -58,37 +58,27 @@ function getElementSelector(element) {
     if (!(element instanceof Element))
         return null;
 
-    if (element.id) {
-        return `#${element.id}`;
-    }
-
     let current = element;
     const pathParts = [];
 
     while (current && current.nodeType === Node.ELEMENT_NODE) {
-        if (current.id) {
-            pathParts.unshift(`#${current.id}`);
-            break;
+        let tagName = current.tagName.toLowerCase();
+        let position = 1;
+        let sibling = current.previousElementSibling;
+
+        while (sibling) {
+            if (sibling.tagName === current.tagName) position++;
+            sibling = sibling.previousElementSibling;
+        }
+
+        if (position > 1) {
+            pathParts.unshift(`${tagName}:nth-of-type(${position})`);
         } else {
-            let tagName = current.tagName.toLowerCase();
-            let position = 1;
-            let sibling = current.previousElementSibling;
-
-            while (sibling) {
-                if (sibling.tagName === current.tagName) position++;
-                sibling = sibling.previousElementSibling;
-            }
-
-            if (position > 1) {
-                pathParts.unshift(`${tagName}:nth-of-type(${position})`);
-            } else {
-                pathParts.unshift(tagName);
-            }
+            pathParts.unshift(tagName);
         }
 
         current = current.parentNode;
     }
-
     return pathParts.join(' > ');
 }
 

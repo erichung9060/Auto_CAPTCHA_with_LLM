@@ -1,6 +1,5 @@
-const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent';
 const CLOUD_VISION_API_ENDPOINT = 'https://vision.googleapis.com/v1/images:annotate';
-const HOLEY_API_ENDPOINT = 'https://ocr.holey.cc/ncku';
 
 var GeminiApiKey = ''
 var CloudVisionApiKey = ''
