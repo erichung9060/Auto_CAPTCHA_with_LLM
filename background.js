@@ -110,8 +110,6 @@ async function updateApiKeys(geminiApiKey, cloudVisionApiKey, sendResponse) {
             cloudVisionApiKey: cloudVisionApiKey
         });
 
-        console.log("Updated API key", GeminiApiKey, CloudVisionApiKey)
-
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
         await chrome.tabs.sendMessage(tab.id, { action: "updateApiKeys" }).catch(error => {
