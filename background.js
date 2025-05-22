@@ -126,21 +126,20 @@ async function updateApiKeys(geminiApiKey, cloudVisionApiKey, sendResponse) {
 
 async function deleteRecord(tab, sendResponse) {
     try {
-        const url = new URL(tab.url);
-        const hostname = url.hostname;
+        const key = tab.url;
 
-        const result = await chrome.storage.local.get(hostname);
-        const data = result[hostname];
+        const result = await chrome.storage.local.get(key);
+        const data = result[key];
 
         if (!data) {
-            sendResponse({ isSuccess: false, error: `No record found for ${hostname}` });
+            sendResponse({ isSuccess: false, error: `No record found for ${key}` });
         } else {
             chrome.tabs.sendMessage(tab.id, {
                 action: "deleteRecord"
             });
 
-            await chrome.storage.local.remove(hostname);
-            sendResponse({ isSuccess: true, message: `Successfully deleted record for ${hostname}` });
+            await chrome.storage.local.remove(key);
+            sendResponse({ isSuccess: true, message: `Successfully deleted record for ${key}` });
         }
     } catch (error) {
         sendResponse({ isSuccess: false, error: error.toString() });

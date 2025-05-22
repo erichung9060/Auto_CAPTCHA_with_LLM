@@ -6,7 +6,7 @@ function updateAutoCaptchaData(selectedCaptcha, selectedInput) {
     input_selector = getElementSelector(selectedInput);
 
     chrome.storage.local.set({
-        [window.location.hostname]: {
+        [window.location.href]: {
             captchaSelector: captcha_selector,
             inputSelector: input_selector
         }
@@ -160,8 +160,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-chrome.storage.local.get(window.location.hostname, (result) => {
-    let autoCaptchaData = result[window.location.hostname];
+chrome.storage.local.get(window.location.href, (result) => {
+    let autoCaptchaData = result[window.location.href];
     if (!autoCaptchaData)  return;
     
     captcha_selector = autoCaptchaData.captchaSelector;
