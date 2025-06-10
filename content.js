@@ -47,7 +47,7 @@ async function handleRecording() {
             updateAutoCaptchaData(selectedCaptcha, selectedInput);
             document.removeEventListener("click", recordingHandler, true);
             alert("Got the input field successfully. The Captcha code will be filled in automatically.");
-            main();
+            fillInCaptcha();
         }
     };
 
@@ -116,29 +116,24 @@ function process() {
     }
 }
 
-function element_exist_in_DOM() {
+function captcha_element_exist() {
     captcha = document.querySelector(captcha_selector);
     inputField = document.querySelector(input_selector);
 
     if (captcha && inputField) return true;
-    else return false;
+    
+    return false;
 }
 
-function wait_for_element(obs) {
-    if (element_exist_in_DOM()) {
-        obs.disconnect();
-        process();
-    }
-}
-
-async function main() {
-    if (!captcha_selector || !input_selector) return;
-
-    if (element_exist_in_DOM()) {
+async function fillInCaptcha() {
+    if (captcha_element_exist()) {
         process();
     } else{
-        const observer = new MutationObserver((mutations, obs) => {
-            wait_for_element(obs)
+        const observer = new MutationObserver((obs) => {
+            if (captcha_element_exist()) {
+                obs.disconnect();
+                process();
+            }
         });
 
         observer.observe(document.documentElement, {
@@ -150,7 +145,7 @@ async function main() {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "updateApiKeys") {
-        main();
+        fillInCaptcha();
     }
     if (request.action === "startRecording") {
         handleRecording();
@@ -166,5 +161,6 @@ chrome.storage.local.get(window.location.href, (result) => {
     
     captcha_selector = autoCaptchaData.captchaSelector;
     input_selector = autoCaptchaData.inputSelector;
-    main();
+
+    if (captcha_selector && input_selector) fillInCaptcha();
 });
