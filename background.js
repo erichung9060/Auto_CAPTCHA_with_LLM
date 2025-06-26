@@ -122,22 +122,57 @@ async function updateApiKeys(geminiApiKey, cloudVisionApiKey, sendResponse) {
     }
 }
 
+function findBestMatch(records, currentPath) {
+    if (!records || records.length === 0) return null;
+
+    let bestMatch = null;
+    let maxLen = 0;
+
+    for (const record of records) {
+        if(currentPath === record.path) {
+            bestMatch = record;
+            break;
+        }
+
+        let i = 0;
+        while (i < currentPath.length && i < record.path.length && currentPath[i] === record.path[i]) {
+            i++;
+        }
+
+        if (i > maxLen) {
+            maxLen = i;
+            bestMatch = record;
+        }
+    }
+    console.log(bestMatch)
+    return bestMatch;
+}
+
+
 async function deleteRecord(tab, sendResponse) {
     try {
-        const key = tab.url;
+        const key = new URL(tab.url).hostname;
 
         const result = await chrome.storage.local.get(key);
         const data = result[key];
 
-        if (!data) {
-            sendResponse({ isSuccess: false, error: `No record found for ${key}` });
-        } else {
+        if (data) {
+            const bestMatch = findBestMatch(data, new URL(tab.url).pathname);
+            const remainingRecords = data.filter(d => d.path !== bestMatch.path);
+
+            if (remainingRecords.length) {
+                await chrome.storage.local.set({ [key]: remainingRecords });
+            } else {
+                await chrome.storage.local.remove(key);
+            }
+
             chrome.tabs.sendMessage(tab.id, {
                 action: "deleteRecord"
             });
 
-            await chrome.storage.local.remove(key);
             sendResponse({ isSuccess: true, message: `Successfully deleted record for ${key}` });
+        } else {
+            sendResponse({ isSuccess: false, error: `No record found for ${key}` });
         }
     } catch (error) {
         sendResponse({ isSuccess: false, error: error.toString() });

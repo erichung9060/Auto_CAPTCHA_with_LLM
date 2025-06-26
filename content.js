@@ -5,11 +5,26 @@ function updateAutoCaptchaData(selectedCaptcha, selectedInput) {
     captcha_selector = getElementSelector(selectedCaptcha);
     input_selector = getElementSelector(selectedInput);
 
-    chrome.storage.local.set({
-        [window.location.href]: {
-            captchaSelector: captcha_selector,
-            inputSelector: input_selector
+    const newRecord = {
+        path: window.location.pathname,
+        captchaSelector: captcha_selector,
+        inputSelector: input_selector
+    };
+
+    chrome.storage.local.get(window.location.hostname, (result) => {
+        let records = result[window.location.hostname] || [];
+        
+        const recordIndex = records.findIndex(r => r.path === newRecord.path);
+
+        if (recordIndex > -1) {
+            records[recordIndex] = newRecord;
+        } else {
+            records.push(newRecord);
         }
+
+        chrome.storage.local.set({
+            [window.location.hostname]: records
+        });
     });
 }
 
@@ -58,6 +73,10 @@ function getElementSelector(element) {
     if (!(element instanceof Element))
         return null;
 
+    if (element.id) {
+        return `#${element.id}`;
+    }
+    
     let current = element;
     const pathParts = [];
 
@@ -80,6 +99,32 @@ function getElementSelector(element) {
         current = current.parentNode;
     }
     return pathParts.join(' > ');
+}
+
+function findBestMatch(records, currentPath) {
+    if (!records || records.length === 0) return null;
+
+    let bestMatch = null;
+    let maxLen = 0;
+
+    for (const record of records) {
+        if(currentPath === record.path) {
+            bestMatch = record;
+            break;
+        }
+
+        let i = 0;
+        while (i < currentPath.length && i < record.path.length && currentPath[i] === record.path[i]) {
+            i++;
+        }
+
+        if (i > maxLen) {
+            maxLen = i;
+            bestMatch = record;
+        }
+    }
+    console.log(bestMatch)
+    return bestMatch;
 }
 
 function deleteRecord() {
@@ -129,7 +174,7 @@ async function fillInCaptcha() {
     if (captcha_element_exist()) {
         process();
     } else{
-        const observer = new MutationObserver((obs) => {
+        const observer = new MutationObserver((mutations, obs) => {
             if (captcha_element_exist()) {
                 obs.disconnect();
                 process();
@@ -155,12 +200,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-chrome.storage.local.get(window.location.href, (result) => {
-    let autoCaptchaData = result[window.location.href];
-    if (!autoCaptchaData)  return;
-    
-    captcha_selector = autoCaptchaData.captchaSelector;
-    input_selector = autoCaptchaData.inputSelector;
+chrome.storage.local.get(window.location.hostname, (result) => {
+    const records = result[window.location.hostname];
+    const bestMatch = findBestMatch(records, window.location.pathname);
 
-    if (captcha_selector && input_selector) fillInCaptcha();
+    if (bestMatch) {
+        captcha_selector = bestMatch.captchaSelector;
+        input_selector = bestMatch.inputSelector;
+        if (captcha_selector && input_selector) fillInCaptcha();
+    }
 });
