@@ -1,32 +1,6 @@
 var captcha_selector, input_selector;
 var captcha, inputField;
 
-function updateAutoCaptchaData(selectedCaptcha, selectedInput) {
-    captcha_selector = getElementSelector(selectedCaptcha);
-    input_selector = getElementSelector(selectedInput);
-
-    const newRecord = {
-        path: window.location.pathname,
-        captchaSelector: captcha_selector,
-        inputSelector: input_selector
-    };
-
-    chrome.storage.local.get(window.location.hostname, (result) => {
-        let records = result[window.location.hostname] || [];
-        
-        const recordIndex = records.findIndex(r => r.path === newRecord.path);
-
-        if (recordIndex > -1) {
-            records[recordIndex] = newRecord;
-        } else {
-            records.push(newRecord);
-        }
-
-        chrome.storage.local.set({
-            [window.location.hostname]: records
-        });
-    });
-}
 
 function getBase64Image(img) {
     const canvas = document.createElement('canvas');
@@ -59,9 +33,10 @@ async function handleRecording() {
             selectedInput = event.target;
             console.log(selectedInput);
 
-            updateAutoCaptchaData(selectedCaptcha, selectedInput);
-            document.removeEventListener("click", recordingHandler, true);
             alert("Got the input field successfully. The Captcha code will be filled in automatically.");
+            document.removeEventListener("click", recordingHandler, true);
+
+            saveRecord(selectedCaptcha, selectedInput);
             fillInCaptcha();
         }
     };
@@ -135,6 +110,21 @@ function deleteRecord() {
 
     captcha_selector = input_selector = null;
     captcha = inputField = null;
+}
+
+function saveRecord(selectedCaptcha, selectedInput){
+    captcha_selector = getElementSelector(selectedCaptcha);
+    input_selector = getElementSelector(selectedInput);
+
+    chrome.runtime.sendMessage({ 
+        action: 'saveRecord', 
+        hostname: window.location.hostname,
+        record: {
+            path: window.location.pathname,
+            captchaSelector: captcha_selector,
+            inputSelector: input_selector
+        }
+    });
 }
 
 async function recognizeAndFill() {

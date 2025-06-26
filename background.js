@@ -148,7 +148,6 @@ function findBestMatch(records, currentPath) {
     return bestMatch;
 }
 
-
 async function deleteRecord(tab, sendResponse) {
     try {
         const key = new URL(tab.url).hostname;
@@ -179,6 +178,21 @@ async function deleteRecord(tab, sendResponse) {
     }
 }
 
+async function saveRecord(hostname, record) {
+    chrome.storage.local.get(hostname, (result) => {
+        let records = result[hostname] || [];
+        const recordIndex = records.findIndex(r => r.path === record.path);
+
+        if (recordIndex > -1) {
+            records[recordIndex] = record;
+        } else {
+            records.push(record);
+        }
+
+        chrome.storage.local.set({ [hostname]: records });
+    });
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     switch (request.action) {
         case 'recognizeCaptcha':
@@ -187,6 +201,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         case 'updateApiKeys':
             updateApiKeys(request.geminiApiKey, request.cloudVisionApiKey, sendResponse);
+            return true;
+
+        case 'saveRecord':
+            saveRecord(request.hostname, request.record);
             return true;
 
         case 'deleteRecord':
