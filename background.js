@@ -1,15 +1,7 @@
 const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent';
 const CLOUD_VISION_API_ENDPOINT = 'https://vision.googleapis.com/v1/images:annotate';
 
-var GeminiApiKey = ''
-var CloudVisionApiKey = ''
-
-chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
-    GeminiApiKey = result.geminiApiKey || '';
-    CloudVisionApiKey = result.cloudVisionApiKey || '';
-});
-
-async function recognize_by_CloudVision(base64Image) {
+async function recognize_by_CloudVision(base64Image, CloudVisionApiKey) {
     const apiUrl = `${CLOUD_VISION_API_ENDPOINT}?key=${CloudVisionApiKey}`;
     const body = {
         requests: [
@@ -50,7 +42,7 @@ async function recognize_by_CloudVision(base64Image) {
     }
 }
 
-async function recognize_by_Gemini(base64Image) {
+async function recognize_by_Gemini(base64Image, GeminiApiKey) {
     const apiUrl = `${GEMINI_API_ENDPOINT}?key=${GeminiApiKey}`;
     const prompt = 'Please analyze this CAPTCHA image. The image contains digits or numbers or words with some noise/distortion. Return only the CAPTCHA numbers or digits or words without any additional text or explanation.';
     const body = {
@@ -89,12 +81,15 @@ async function recognize_by_Gemini(base64Image) {
     }
 }
 
-
 async function recognizeCaptcha(image, sendResponse) {
+    const result = await chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey']);
+    const GeminiApiKey = result.geminiApiKey || '';
+    const CloudVisionApiKey = result.cloudVisionApiKey || '';
+
     if (CloudVisionApiKey !== '') {
-        sendResponse(await recognize_by_CloudVision(image));
+        sendResponse(await recognize_by_CloudVision(image, CloudVisionApiKey));
     } else if (GeminiApiKey !== '') {
-        sendResponse(await recognize_by_Gemini(image));
+        sendResponse(await recognize_by_Gemini(image, GeminiApiKey));
     } else {
         sendResponse({ isSuccess: false, error: "No API key found" });
     }
@@ -102,19 +97,13 @@ async function recognizeCaptcha(image, sendResponse) {
 
 async function updateApiKeys(geminiApiKey, cloudVisionApiKey, sendResponse) {
     try {
-        GeminiApiKey = geminiApiKey
-        CloudVisionApiKey = cloudVisionApiKey
-
         await chrome.storage.local.set({
             geminiApiKey: geminiApiKey,
             cloudVisionApiKey: cloudVisionApiKey
         });
 
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-        await chrome.tabs.sendMessage(tab.id, { action: "updateApiKeys" }).catch(error => {
-            console.warn("Failed to send updateApiKeys message:", error);
-        });
+        await chrome.tabs.sendMessage(tab.id, { action: "fillInCaptcha" });
 
         sendResponse({ isSuccess: true })
     } catch (error) {
@@ -150,47 +139,32 @@ function findBestMatch(records, currentPath) {
 
 async function deleteRecord(tab, sendResponse) {
     try {
-        const key = new URL(tab.url).hostname;
+        const hostname = new URL(tab.url).hostname;
 
-        const result = await chrome.storage.local.get(key);
-        const data = result[key];
+        const result = await chrome.storage.local.get(hostname);
+        const records = result[hostname];
 
-        if (data) {
-            const bestMatch = findBestMatch(data, new URL(tab.url).pathname);
-            const remainingRecords = data.filter(d => d.path !== bestMatch.path);
+        if (records) {
+            const bestMatch = findBestMatch(records, new URL(tab.url).pathname);
+            const remainingRecords = records.filter(r => r.path !== bestMatch.path);
 
             if (remainingRecords.length) {
-                await chrome.storage.local.set({ [key]: remainingRecords });
+                await chrome.storage.local.set({ [hostname]: remainingRecords });
             } else {
-                await chrome.storage.local.remove(key);
+                await chrome.storage.local.remove(hostname);
             }
 
             chrome.tabs.sendMessage(tab.id, {
                 action: "deleteRecord"
             });
 
-            sendResponse({ isSuccess: true, message: `Successfully deleted record for ${key}` });
+            sendResponse({ isSuccess: true, message: `Successfully deleted record for ${hostname}` });
         } else {
-            sendResponse({ isSuccess: false, error: `No record found for ${key}` });
+            sendResponse({ isSuccess: false, error: `No record found for ${hostname}` });
         }
     } catch (error) {
         sendResponse({ isSuccess: false, error: error.toString() });
     }
-}
-
-async function saveRecord(hostname, record) {
-    chrome.storage.local.get(hostname, (result) => {
-        let records = result[hostname] || [];
-        const recordIndex = records.findIndex(r => r.path === record.path);
-
-        if (recordIndex > -1) {
-            records[recordIndex] = record;
-        } else {
-            records.push(record);
-        }
-
-        chrome.storage.local.set({ [hostname]: records });
-    });
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -201,10 +175,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         case 'updateApiKeys':
             updateApiKeys(request.geminiApiKey, request.cloudVisionApiKey, sendResponse);
-            return true;
-
-        case 'saveRecord':
-            saveRecord(request.hostname, request.record);
             return true;
 
         case 'deleteRecord':

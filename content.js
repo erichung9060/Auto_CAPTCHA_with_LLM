@@ -1,4 +1,4 @@
-var captcha_selector, input_selector;
+var captchaSelector, inputSelector;
 var captcha, inputField;
 
 
@@ -17,7 +17,7 @@ async function handleRecording() {
     let selectedCaptcha = null;
     let selectedInput = null;
 
-    const recordingHandler = (event) => {
+    const recordingHandler = async (event) => {
         if (!selectedCaptcha) {
             selectedCaptcha = event.target;
             console.log(selectedCaptcha);
@@ -25,10 +25,10 @@ async function handleRecording() {
             if (!(selectedCaptcha instanceof HTMLImageElement)) {
                 alert("Please select a valid CAPTCHA image.");
                 selectedCaptcha = null;
-            }else{
+            } else {
                 alert("Got the CAPTCHA image successfully. Now please click the input field for the CAPTCHA code.");
             }
-            
+
         } else {
             selectedInput = event.target;
             console.log(selectedInput);
@@ -36,8 +36,8 @@ async function handleRecording() {
             alert("Got the input field successfully. The Captcha code will be filled in automatically.");
             document.removeEventListener("click", recordingHandler, true);
 
-            saveRecord(selectedCaptcha, selectedInput);
-            fillInCaptcha();
+            await saveRecord(selectedCaptcha, selectedInput);
+            main();
         }
     };
 
@@ -51,7 +51,7 @@ function getElementSelector(element) {
     if (element.id) {
         return `#${element.id}`;
     }
-    
+
     let current = element;
     const pathParts = [];
 
@@ -76,6 +76,30 @@ function getElementSelector(element) {
     return pathParts.join(' > ');
 }
 
+async function saveRecord(selectedCaptcha, selectedInput) {
+    captchaSelector = getElementSelector(selectedCaptcha)
+    inputSelector = getElementSelector(selectedInput)
+
+    let record = {
+        path: window.location.pathname,
+        captchaSelector: captchaSelector,
+        inputSelector: inputSelector
+    }
+    const hostname = window.location.hostname;
+    const result = await chrome.storage.local.get(hostname);
+    let records = result[hostname] || [];
+
+    const recordIndex = records.findIndex(r => r.path === record.path);
+
+    if (recordIndex > -1) {
+        records[recordIndex] = record;
+    } else {
+        records.push(record);
+    }
+
+    await chrome.storage.local.set({ [hostname]: records });
+}
+
 function findBestMatch(records, currentPath) {
     if (!records || records.length === 0) return null;
 
@@ -83,7 +107,7 @@ function findBestMatch(records, currentPath) {
     let maxLen = 0;
 
     for (const record of records) {
-        if(currentPath === record.path) {
+        if (currentPath === record.path) {
             bestMatch = record;
             break;
         }
@@ -108,23 +132,8 @@ function deleteRecord() {
 
     inputField.value = "";
 
-    captcha_selector = input_selector = null;
+    captchaSelector = inputSelector = null;
     captcha = inputField = null;
-}
-
-function saveRecord(selectedCaptcha, selectedInput){
-    captcha_selector = getElementSelector(selectedCaptcha);
-    input_selector = getElementSelector(selectedInput);
-
-    chrome.runtime.sendMessage({ 
-        action: 'saveRecord', 
-        hostname: window.location.hostname,
-        record: {
-            path: window.location.pathname,
-            captchaSelector: captcha_selector,
-            inputSelector: input_selector
-        }
-    });
 }
 
 async function recognizeAndFill() {
@@ -152,18 +161,30 @@ function process() {
 }
 
 function captcha_element_exist() {
-    captcha = document.querySelector(captcha_selector);
-    inputField = document.querySelector(input_selector);
+    captcha = document.querySelector(captchaSelector);
+    inputField = document.querySelector(inputSelector);
 
     if (captcha && inputField) return true;
-    
+
     return false;
 }
 
-async function fillInCaptcha() {
+async function main() {
+    const hostname = window.location.hostname;
+    const result = await chrome.storage.local.get(hostname);
+    const records = result[hostname];
+    const bestMatch = findBestMatch(records, window.location.pathname);
+
+    if (bestMatch) {
+        captchaSelector = bestMatch.captchaSelector;
+        inputSelector = bestMatch.inputSelector;
+    } else {
+        return;
+    }
+
     if (captcha_element_exist()) {
         process();
-    } else{
+    } else {
         const observer = new MutationObserver((mutations, obs) => {
             if (captcha_element_exist()) {
                 obs.disconnect();
@@ -179,24 +200,15 @@ async function fillInCaptcha() {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "updateApiKeys") {
-        fillInCaptcha();
+    if (request.action === "fillInCaptcha") {
+        main();
     }
     if (request.action === "startRecording") {
         handleRecording();
     }
     if (request.action === "deleteRecord") {
-        deleteRecord()
+        deleteRecord();
     }
 });
 
-chrome.storage.local.get(window.location.hostname, (result) => {
-    const records = result[window.location.hostname];
-    const bestMatch = findBestMatch(records, window.location.pathname);
-
-    if (bestMatch) {
-        captcha_selector = bestMatch.captchaSelector;
-        input_selector = bestMatch.inputSelector;
-        if (captcha_selector && input_selector) fillInCaptcha();
-    }
-});
+main();
