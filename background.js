@@ -32,6 +32,10 @@ async function recognize_by_CloudVision(base64Image, CloudVisionApiKey) {
         console.log("CloudVision API respone:", data)
 
         if (data.error) return { isSuccess: false, error: data.error.message }
+        
+        if (!data.responses[0] || !data.responses[0].fullTextAnnotation) {
+            return { isSuccess: false, error: "No text detected in image." };
+        }
 
         let verificationCode = data.responses[0].fullTextAnnotation.text;
         verificationCode = verificationCode.match(/[a-zA-Z0-9]+/g).join('');
