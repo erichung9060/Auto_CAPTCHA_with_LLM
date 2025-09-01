@@ -37,7 +37,7 @@ async function recognize_by_CloudVision(base64Image, CloudVisionApiKey) {
             return { isSuccess: false, error: "No text detected in image." };
         }
 
-        let verificationCode = data.responses[0].fullTextAnnotation.text;
+        let verificationCode = data.responses[0].fullTextAnnotation.text;        
         verificationCode = verificationCode.match(/[a-zA-Z0-9]+/g).join('');
 
         return { isSuccess: true, verificationCode: verificationCode };
@@ -77,7 +77,11 @@ async function recognize_by_Gemini(base64Image, GeminiApiKey) {
         if (data.error) return { isSuccess: false, error: data.error.message }
 
         let verificationCode = data.candidates[0].content.parts[0].text.trim()
-        verificationCode = verificationCode.match(/[a-zA-Z0-9]+/g).join('');
+
+        const alpnum_matches = verificationCode.match(/[a-zA-Z0-9]+/g);
+        if (alpnum_matches) {
+            verificationCode = alpnum_matches.join('');
+        }
 
         return { isSuccess: true, verificationCode: verificationCode }
     } catch (error) {
