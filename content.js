@@ -3,14 +3,14 @@ var captcha, inputField;
 
 
 function getBase64Image(img) {
-        const canvas = document.createElement('canvas');
+    const canvas = document.createElement('canvas');
     canvas.width = img.naturalWidth;
     canvas.height = img.naturalHeight;
 
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
 
-        return canvas.toDataURL('image/png').split(',')[1];
+    return canvas.toDataURL('image/png').split(',')[1];
 }
 
 async function handleRecording() {
