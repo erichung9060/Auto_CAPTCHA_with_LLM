@@ -110,9 +110,6 @@ async function updateApiKeys(geminiApiKey, cloudVisionApiKey, sendResponse) {
             cloudVisionApiKey: cloudVisionApiKey
         });
 
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        await chrome.tabs.sendMessage(tab.id, { action: "fillInCaptcha" });
-
         sendResponse({ isSuccess: true })
     } catch (error) {
         sendResponse({ isSuccess: false, error: error.toString() })

@@ -14,23 +14,27 @@ function showMessage(message, color) {
 document.getElementById('saveKeys').addEventListener('click', async event => {
     event.preventDefault();
 
-    try {
-        const geminiApiKey = document.getElementById('geminiKey').value;
-        const cloudVisionApiKey = document.getElementById('cloudVisionKey').value;
+    const geminiApiKey = document.getElementById('geminiKey').value;
+    const cloudVisionApiKey = document.getElementById('cloudVisionKey').value;
 
-        const response = await chrome.runtime.sendMessage({
-            action: 'updateApiKeys',
-            geminiApiKey,
-            cloudVisionApiKey
-        });
+    const response = await chrome.runtime.sendMessage({
+        action: 'updateApiKeys',
+        geminiApiKey,
+        cloudVisionApiKey
+    });
 
-        if (response.isSuccess) {
-            showMessage("Successfully updated the API keys!", "green");
-        } else {
-            showMessage(response.error, "red");
+    if (response.isSuccess) {
+        showMessage("Successfully updated the API keys!", "green");
+
+        try {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            await chrome.tabs.sendMessage(tab.id, { action: "fillInCaptcha" });
+        } catch (error) {
+            showMessage(error.toString(), "red");
+            showMessage("You can try reopen the website that requires CAPTCHA.", "red");
         }
-    } catch (error) {
-        showMessage(error.toString(), "red");
+    } else {
+        showMessage(response.error, "red");
     }
 });
 
