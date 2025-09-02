@@ -206,7 +206,7 @@ function getElementBySelector(selector) {
     return document.querySelector(selector);    
 }
 
-function captcha_element_exist() {
+function captchaElementExist() {
     captcha = getElementBySelector(captchaSelector);
     inputField = getElementBySelector(inputSelector);
 
@@ -228,11 +228,11 @@ async function main() {
         return;
     }
 
-    if (captcha_element_exist()) {
+    if (captchaElementExist()) {
         process();
     } else {
         const observer = new MutationObserver((mutations, obs) => {
-            if (captcha_element_exist()) {
+            if (captchaElementExist()) {
                 obs.disconnect();
                 process();
             }
