@@ -24,27 +24,13 @@ A chrome extension for automatically solves CAPTCHAs and fills the verification 
 
 ## How to Use
 
-1.  **Install the Extension on [Chrome Web Store](https://chromewebstore.google.com/detail/auto-captcha-with-llm/opmhaocokfchpadepjolomhlgeopjdgo)**
+1.  **Install the Extension** from [Chrome Web Store](https://chromewebstore.google.com/detail/auto-captcha-with-llm/opmhaocokfchpadepjolomhlgeopjdgo)
 
-2.  **Configure API Keys:**
-    *   Click the extension icon in the toolbar to open the popup.
-    *   Enter your Gemini API key or Cloud Vision API key.
-    *   Click "Save Keys".
+2.  **Configure API Keys:** Click the extension icon → Enter your Gemini or Cloud Vision API key → Click "Save Keys"
 
-3.  **Record CAPTCHA and Input Field:**
-    *   Visit the website where you want to automate CAPTCHA solving.
-    *   Click the extension icon.
-    *   Click "Start Recording".
-    *   Click the CAPTCHA image on the webpage.
-    *   Click the input field where the CAPTCHA code should be entered.
-    *   The extension will confirm that it has recorded the information.
+3.  **Record CAPTCHA:** Click extension icon → "Start Recording" → Click CAPTCHA image → Click input field
 
-4.  **Automatic Solving:** The next time you visit the website and encounter the same CAPTCHA, the extension will automatically solve it and fill in the code!
-
-5.  **Delete Record:**
-    *   Click the extension icon.
-    *   Click "Delete Record On This Website".
-    *   Confirm your deletion.
+4.  **Auto-Solve:** Extension will automatically solve CAPTCHAs on subsequent visits
 
 ## Permissions Explained
 
