@@ -3,14 +3,14 @@ var captcha, inputField;
 
 
 function getBase64Image(img) {
-    const canvas = document.createElement('canvas');
+        const canvas = document.createElement('canvas');
     canvas.width = img.naturalWidth;
     canvas.height = img.naturalHeight;
 
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
 
-    return canvas.toDataURL('image/png').split(',')[1];
+        return canvas.toDataURL('image/png').split(',')[1];
 }
 
 async function handleRecording() {
@@ -19,7 +19,15 @@ async function handleRecording() {
 
     const recordingHandler = async (event) => {
         if (!selectedCaptcha) {
-            selectedCaptcha = event.target;
+            let target = event.target;
+            
+            if (target.shadowRoot) {
+                const imgInShadow = target.shadowRoot.querySelector('img');
+                selectedCaptcha = imgInShadow;
+            }else{
+                selectedCaptcha = target
+            }
+            
             console.log(selectedCaptcha);
 
             if (!(selectedCaptcha instanceof HTMLImageElement)) {
@@ -44,18 +52,10 @@ async function handleRecording() {
     document.addEventListener("click", recordingHandler, true);
 }
 
-function getElementSelector(element) {
-    if (!(element instanceof Element))
-        return null;
-
-    if (element.id) {
-        return `#${element.id}`;
-    }
-
-    let current = element;
+function buildPathParts(current, stopCondition) {
     const pathParts = [];
-
-    while (current && current.nodeType === Node.ELEMENT_NODE) {
+    
+    while (current && stopCondition(current)) {
         let tagName = current.tagName.toLowerCase();
         let position = 1;
         let sibling = current.previousElementSibling;
@@ -73,7 +73,40 @@ function getElementSelector(element) {
 
         current = current.parentNode;
     }
-    return pathParts.join(' > ');
+    
+    return pathParts;
+}
+
+function getElementSelector(element) {
+    if (!(element instanceof Element))
+        return null;
+
+    if (element.getRootNode() instanceof ShadowRoot) {
+        const shadowHost = element.getRootNode().host;
+        const hostSelector = getElementSelector(shadowHost);
+        
+        if (element.id) {
+            return `${hostSelector}::shadow-root::#${element.id}`;
+        }
+        
+        const shadowPathParts = buildPathParts(element, (current) => 
+            current && current.getRootNode() instanceof ShadowRoot && 
+            current !== element.getRootNode()
+        );
+        
+        const shadowPath = shadowPathParts.join(' > ');
+        return `${hostSelector}::shadow-root::${shadowPath}`;
+    } else {
+        if (element.id) {
+            return `#${element.id}`;
+        }
+
+        const pathParts = buildPathParts(element, (current) => 
+            current && current.nodeType === Node.ELEMENT_NODE
+        );
+        
+        return pathParts.join(' > ');
+    }
 }
 
 async function saveRecord(selectedCaptcha, selectedInput) {
@@ -160,9 +193,22 @@ function process() {
     }
 }
 
+function getElementBySelector(selector) {
+    if (selector.includes('::shadow-root::')) {
+        const [hostSelector, shadowPath] = selector.split('::shadow-root::');
+        const host = document.querySelector(hostSelector);
+        
+        if (host && host.shadowRoot) {
+            return host.shadowRoot.querySelector(shadowPath);
+        }
+        return null;
+    }
+    return document.querySelector(selector);    
+}
+
 function captcha_element_exist() {
-    captcha = document.querySelector(captchaSelector);
-    inputField = document.querySelector(inputSelector);
+    captcha = getElementBySelector(captchaSelector);
+    inputField = getElementBySelector(inputSelector);
 
     if (captcha && inputField) return true;
 
