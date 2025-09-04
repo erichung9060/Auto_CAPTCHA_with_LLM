@@ -19,11 +19,7 @@ document.getElementById('saveKeys').addEventListener('click', async event => {
     const geminiApiKey = document.getElementById('geminiKey').value;
     const cloudVisionApiKey = document.getElementById('cloudVisionKey').value;
 
-    const response = await chrome.runtime.sendMessage({
-        action: 'updateApiKeys',
-        geminiApiKey,
-        cloudVisionApiKey
-    });
+    const response = await updateApiKeys(geminiApiKey, cloudVisionApiKey);
 
     if (response.isSuccess) {
         showMessage("Successfully updated the API keys!", "green");
@@ -133,6 +129,19 @@ function findBestMatch(records, currentPath) {
         }
     }
     return bestMatch;
+}
+
+async function updateApiKeys(geminiApiKey, cloudVisionApiKey) {
+    try {
+        await chrome.storage.local.set({
+            geminiApiKey: geminiApiKey,
+            cloudVisionApiKey: cloudVisionApiKey
+        });
+
+        return { isSuccess: true };
+    } catch (error) {
+        return { isSuccess: false, error: error.toString() };
+    }
 }
 
 async function deleteRecord(tab) {

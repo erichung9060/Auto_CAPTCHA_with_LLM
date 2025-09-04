@@ -111,18 +111,6 @@ async function recognizeCaptcha(image, captchaType, sendResponse) {
     }
 }
 
-async function updateApiKeys(geminiApiKey, cloudVisionApiKey, sendResponse) {
-    try {
-        await chrome.storage.local.set({
-            geminiApiKey: geminiApiKey,
-            cloudVisionApiKey: cloudVisionApiKey
-        });
-
-        sendResponse({ isSuccess: true })
-    } catch (error) {
-        sendResponse({ isSuccess: false, error: error.toString() })
-    }
-}
 
 function findBestMatch(records, currentPath) {
     if (!records || records.length === 0) return null;
@@ -153,10 +141,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     switch (request.action) {
         case 'recognizeCaptcha':
             recognizeCaptcha(request.image, request.captchaType, sendResponse);
-            return true;
-
-        case 'updateApiKeys':
-            updateApiKeys(request.geminiApiKey, request.cloudVisionApiKey, sendResponse);
             return true;
     }
 });
