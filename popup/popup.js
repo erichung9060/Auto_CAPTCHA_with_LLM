@@ -87,14 +87,13 @@ chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
 
 async function loadSettings() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab || !tab.url){
+    if (!tab || !tab.url) {
         document.getElementById('settings').classList.add('hidden');
         showMessage("No available page found. Please open the site you want to record.", "red");
         return;
-    }else{
+    } else {
         tab_id = tab.id;
     }
-    
 
     hostname = new URL(tab.url).hostname;
     pathname = new URL(tab.url).pathname;
@@ -102,7 +101,7 @@ async function loadSettings() {
     const { [hostname]: records } = await chrome.storage.local.get(hostname);
     records_unber_hostname = records;
 
-    if (records){
+    if (records) {
         record_on_this_site = findBestMatch(records, pathname);
 
         const radio = document.querySelector(`input[name="captchaType"][value="${record_on_this_site.captchaType}"]`);
@@ -144,20 +143,20 @@ function findBestMatch(records, currentPath) {
 
 
 async function saveCaptchaTypeSettings() {
-    try{
+    try {
         const selectedType = document.querySelector('input[name="captchaType"]:checked').value;
-        
+
         var new_records = records_unber_hostname;
         const recordIndex = new_records.findIndex(r => r.pathname === record_on_this_site.pathname);
         new_records[recordIndex].captchaType = selectedType;
         await chrome.storage.local.set({ [hostname]: new_records });
-        
+
         const typeDisplayMap = {
             'numbersOnly': 'Numbers Only',
             'lettersOnly': 'Letters Only',
             'auto': 'Auto Detect'
         };
-        
+
         showMessage(`CAPTCHA type setting saved: ${typeDisplayMap[selectedType]}`, "green");
         await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
         loadSettings();
@@ -169,6 +168,5 @@ async function saveCaptchaTypeSettings() {
 document.querySelectorAll('input[name="captchaType"]').forEach(radio => {
     radio.addEventListener('change', saveCaptchaTypeSettings);
 });
-
 
 loadSettings();

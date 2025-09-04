@@ -32,12 +32,12 @@ async function recognize_by_CloudVision(base64Image, CloudVisionApiKey) {
         console.log("CloudVision API respone:", data)
 
         if (data.error) return { isSuccess: false, error: data.error.message }
-        
+
         if (!data.responses[0] || !data.responses[0].fullTextAnnotation) {
             return { isSuccess: false, error: "No text detected in image." };
         }
 
-        let verificationCode = data.responses[0].fullTextAnnotation.text;        
+        let verificationCode = data.responses[0].fullTextAnnotation.text;
         verificationCode = verificationCode.match(/[a-zA-Z0-9]+/g).join('');
 
         return { isSuccess: true, verificationCode: verificationCode };
@@ -48,9 +48,9 @@ async function recognize_by_CloudVision(base64Image, CloudVisionApiKey) {
 
 async function recognize_by_Gemini(base64Image, captchaType, GeminiApiKey) {
     const apiUrl = `${GEMINI_API_ENDPOINT}?key=${GeminiApiKey}`;
-    
+
     let prompt = 'Please analyze this CAPTCHA image. The image contains digits or numbers or words with some noise/distortion. Return only the CAPTCHA numbers or digits or words without any additional text or explanation.';
-    
+
     if (captchaType === 'numbersOnly') {
         prompt = 'Please analyze this CAPTCHA image. The image only contains numbers/digits with some noise/distortion. Return only the CAPTCHA numbers without any additional text or explanation.';
     } else if (captchaType === 'lettersOnly') {
@@ -109,32 +109,6 @@ async function recognizeCaptcha(image, captchaType, sendResponse) {
     } else {
         sendResponse({ isSuccess: false, error: "No API key found" });
     }
-}
-
-
-function findBestMatch(records, currentPath) {
-    if (!records || records.length === 0) return null;
-
-    let bestMatch = null;
-    let maxLen = 0;
-
-    for (const record of records) {
-        if(currentPath === record.pathname) {
-            bestMatch = record;
-            break;
-        }
-
-        let i = 0;
-        while (i < currentPath.length && i < record.pathname.length && currentPath[i] === record.pathname[i]) {
-            i++;
-        }
-
-        if (i > maxLen) {
-            maxLen = i;
-            bestMatch = record;
-        }
-    }
-    return bestMatch;
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

@@ -20,14 +20,14 @@ async function handleRecording() {
     const recordingHandler = async (event) => {
         if (!selectedCaptcha) {
             let target = event.target;
-            
+
             if (target.shadowRoot) {
                 const imgInShadow = target.shadowRoot.querySelector('img');
                 selectedCaptcha = imgInShadow;
-            }else{
+            } else {
                 selectedCaptcha = target
             }
-            
+
             console.log("[Auto CAPTCHA with LLM] Selected CAPTCHA Image: ", selectedCaptcha);
 
             if (!(selectedCaptcha instanceof HTMLImageElement)) {
@@ -54,7 +54,7 @@ async function handleRecording() {
 
 function buildPathParts(current, stopCondition) {
     const pathParts = [];
-    
+
     while (current && stopCondition(current)) {
         let tagName = current.tagName.toLowerCase();
         let position = 1;
@@ -73,7 +73,7 @@ function buildPathParts(current, stopCondition) {
 
         current = current.parentNode;
     }
-    
+
     return pathParts;
 }
 
@@ -84,16 +84,16 @@ function getElementSelector(element) {
     if (element.getRootNode() instanceof ShadowRoot) {
         const shadowHost = element.getRootNode().host;
         const hostSelector = getElementSelector(shadowHost);
-        
+
         if (element.id) {
             return `${hostSelector}::shadow-root::#${element.id}`;
         }
-        
-        const shadowPathParts = buildPathParts(element, (current) => 
-            current && current.getRootNode() instanceof ShadowRoot && 
+
+        const shadowPathParts = buildPathParts(element, (current) =>
+            current && current.getRootNode() instanceof ShadowRoot &&
             current !== element.getRootNode()
         );
-        
+
         const shadowPath = shadowPathParts.join(' > ');
         return `${hostSelector}::shadow-root::${shadowPath}`;
     } else {
@@ -101,10 +101,10 @@ function getElementSelector(element) {
             return `#${element.id}`;
         }
 
-        const pathParts = buildPathParts(element, (current) => 
+        const pathParts = buildPathParts(element, (current) =>
             current && current.nodeType === Node.ELEMENT_NODE
         );
-        
+
         return pathParts.join(' > ');
     }
 }
@@ -175,7 +175,7 @@ function deleteRecord() {
 
 async function recognizeAndFill() {
     let base64Image = getBase64Image(captchaImage)
-        const response = await chrome.runtime.sendMessage({
+    const response = await chrome.runtime.sendMessage({
         action: "recognizeCaptcha",
         image: base64Image,
         captchaType: captchaType
@@ -203,13 +203,13 @@ function getElementBySelector(selector) {
     if (selector.includes('::shadow-root::')) {
         const [hostSelector, shadowPath] = selector.split('::shadow-root::');
         const host = document.querySelector(hostSelector);
-        
+
         if (host && host.shadowRoot) {
             return host.shadowRoot.querySelector(shadowPath);
         }
         return null;
     }
-    return document.querySelector(selector);    
+    return document.querySelector(selector);
 }
 
 function captchaElementExist() {
