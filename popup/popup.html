@@ -26,7 +26,27 @@
                 Save Keys
             </button>
         </form>
-        <hr>
+        <div id="captchaTypeSection" class="hidden">
+            <hr>
+            <div class="space-y-2">
+                <h2 class="text-lg font-semibold text-gray-800">CAPTCHA Type Settings</h2>
+                <div class="space-y-2">
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="captchaType" value="numbersOnly" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                        <span class="text-sm text-gray-600">Numbers Only</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="captchaType" value="lettersOnly" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                        <span class="text-sm text-gray-600">Letters Only</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="radio" name="captchaType" value="auto" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" checked>
+                        <span class="text-sm text-gray-600">Auto Detect</span>
+                    </label>
+                </div>
+            </div>
+            <hr>
+        </div>
         <button type="button" id="startRecording"
             class="w-full bg-green-500 text-white py-2 rounded-lg font-medium hover:bg-green-600">
             Start Recording

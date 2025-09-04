@@ -73,6 +73,9 @@ document.getElementById('deleteRecord').addEventListener('click', async () => {
         } else {
             showMessage("No available tab found, please open the site you want to delete.", "red");
         }
+
+        const captchaTypeSection = document.getElementById('captchaTypeSection');
+        captchaTypeSection.classList.add('hidden');
     });
 
     document.getElementById('confirmNo').addEventListener('click', () => {
@@ -84,3 +87,78 @@ chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
     document.getElementById('geminiKey').value = result.geminiApiKey || '';
     document.getElementById('cloudVisionKey').value = result.cloudVisionApiKey || '';
 });
+
+async function loadCaptchaTypeSettings() {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const hostname = new URL(tab.url).hostname;
+    const path = new URL(tab.url).pathname;
+    
+    const result = await chrome.storage.local.get(hostname);
+    const records = result[hostname];
+
+    if (records) {
+        const bestMatch = findBestMatch(records, path);
+        const radio = document.querySelector(`input[name="captchaType"][value="${bestMatch.captchaType}"]`);
+        radio.checked = true;
+
+        const captchaTypeSection = document.getElementById('captchaTypeSection');
+        captchaTypeSection.classList.remove('hidden');
+    }
+}
+
+function findBestMatch(records, currentPath) {
+    if (!records || records.length === 0) return null;
+
+    let bestMatch = null;
+    let maxLen = 0;
+
+    for (const record of records) {
+        if (currentPath === record.path) {
+            bestMatch = record;
+            break;
+        }
+
+        let i = 0;
+        while (i < currentPath.length && i < record.path.length && currentPath[i] === record.path[i]) {
+            i++;
+        }
+
+        if (i > maxLen) {
+            maxLen = i;
+            bestMatch = record;
+        }
+    }
+    return bestMatch;
+}
+
+async function saveCaptchaTypeSettings() {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const hostname = new URL(tab.url).hostname;
+    const path = new URL(tab.url).pathname;
+    
+    const result = await chrome.storage.local.get(hostname);
+    let records = result[hostname];
+    const bestMatch = findBestMatch(records, path);
+
+    const selectedType = document.querySelector('input[name="captchaType"]:checked').value;
+    const recordIndex = records.findIndex(r => r.path === bestMatch.path);
+    records[recordIndex].captchaType = selectedType;
+
+    await chrome.storage.local.set({ [hostname]: records });
+    
+    const typeDisplayMap = {
+        'numbersOnly': 'Numbers Only',
+        'lettersOnly': 'Letters Only',
+        'auto': 'Auto Detect'
+    };
+    
+    showMessage(`CAPTCHA type setting saved: ${typeDisplayMap[selectedType]}`, "green");
+
+    await chrome.tabs.sendMessage(tab.id, { action: "fillInCaptcha" });
+}
+
+document.querySelectorAll('input[name="captchaType"]').forEach(radio => {
+    radio.addEventListener('change', saveCaptchaTypeSettings);
+});
+
+loadCaptchaTypeSettings();

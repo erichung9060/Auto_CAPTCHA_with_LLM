@@ -1,4 +1,4 @@
-var captchaSelector, inputSelector;
+var captchaSelector, inputSelector, captchaType;
 var captcha, inputField;
 
 
@@ -28,7 +28,7 @@ async function handleRecording() {
                 selectedCaptcha = target
             }
             
-            console.log(selectedCaptcha);
+            console.log("[Auto CAPTCHA with LLM] Selected CAPTCHA Image: ", selectedCaptcha);
 
             if (!(selectedCaptcha instanceof HTMLImageElement)) {
                 alert("Please select a valid CAPTCHA image.");
@@ -39,7 +39,7 @@ async function handleRecording() {
 
         } else {
             selectedInput = event.target;
-            console.log(selectedInput);
+            console.log("[Auto CAPTCHA with LLM] Selected Input Field: ", selectedInput);
 
             alert("Got the input field successfully. The Captcha code will be filled in automatically.");
             document.removeEventListener("click", recordingHandler, true);
@@ -116,8 +116,10 @@ async function saveRecord(selectedCaptcha, selectedInput) {
     let record = {
         path: window.location.pathname,
         captchaSelector: captchaSelector,
-        inputSelector: inputSelector
+        inputSelector: inputSelector,
+        captchaType: 'auto'
     }
+
     const hostname = window.location.hostname;
     const result = await chrome.storage.local.get(hostname);
     let records = result[hostname] || [];
@@ -155,7 +157,6 @@ function findBestMatch(records, currentPath) {
             bestMatch = record;
         }
     }
-    console.log(bestMatch)
     return bestMatch;
 }
 
@@ -167,16 +168,19 @@ function deleteRecord() {
 
     captchaSelector = inputSelector = null;
     captcha = inputField = null;
+    captchaType = null;
 }
 
 async function recognizeAndFill() {
     let base64Image = getBase64Image(captcha)
-    const response = await chrome.runtime.sendMessage({
+        const response = await chrome.runtime.sendMessage({
         action: "recognizeCaptcha",
-        image: base64Image
+        image: base64Image,
+        captchaType: captchaType
     });
 
     if (response.isSuccess) {
+        console.log("[Auto CAPTCHA with LLM] CAPTCHA recognized successfully:", response.verificationCode);
         inputField.value = response.verificationCode;
     } else {
         console.error("Backend Error: ", response.error)
@@ -222,8 +226,10 @@ async function main() {
     const bestMatch = findBestMatch(records, window.location.pathname);
 
     if (bestMatch) {
+        console.log("[Auto CAPTCHA with LLM] Found Record: ", bestMatch);
         captchaSelector = bestMatch.captchaSelector;
         inputSelector = bestMatch.inputSelector;
+        captchaType = bestMatch.captchaType;
     } else {
         return;
     }

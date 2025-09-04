@@ -46,9 +46,17 @@ async function recognize_by_CloudVision(base64Image, CloudVisionApiKey) {
     }
 }
 
-async function recognize_by_Gemini(base64Image, GeminiApiKey) {
+async function recognize_by_Gemini(base64Image, captchaType, GeminiApiKey) {
     const apiUrl = `${GEMINI_API_ENDPOINT}?key=${GeminiApiKey}`;
-    const prompt = 'Please analyze this CAPTCHA image. The image contains digits or numbers or words with some noise/distortion. Return only the CAPTCHA numbers or digits or words without any additional text or explanation.';
+    
+    let prompt = 'Please analyze this CAPTCHA image. The image contains digits or numbers or words with some noise/distortion. Return only the CAPTCHA numbers or digits or words without any additional text or explanation.';
+    
+    if (captchaType === 'numbersOnly') {
+        prompt = 'Please analyze this CAPTCHA image. The image only contains numbers/digits with some noise/distortion. Return only the CAPTCHA numbers without any additional text or explanation.';
+    } else if (captchaType === 'lettersOnly') {
+        prompt = 'Please analyze this CAPTCHA image. The image only contains letters/alphabetic characters with some noise/distortion. Return only the CAPTCHA letters without any additional text or explanation.';
+    }
+    console.log(prompt)
     const body = {
         contents: [
             {
@@ -89,7 +97,7 @@ async function recognize_by_Gemini(base64Image, GeminiApiKey) {
     }
 }
 
-async function recognizeCaptcha(image, sendResponse) {
+async function recognizeCaptcha(image, captchaType, sendResponse) {
     const result = await chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey']);
     const GeminiApiKey = result.geminiApiKey || '';
     const CloudVisionApiKey = result.cloudVisionApiKey || '';
@@ -97,7 +105,7 @@ async function recognizeCaptcha(image, sendResponse) {
     if (CloudVisionApiKey !== '') {
         sendResponse(await recognize_by_CloudVision(image, CloudVisionApiKey));
     } else if (GeminiApiKey !== '') {
-        sendResponse(await recognize_by_Gemini(image, GeminiApiKey));
+        sendResponse(await recognize_by_Gemini(image, captchaType, GeminiApiKey));
     } else {
         sendResponse({ isSuccess: false, error: "No API key found" });
     }
@@ -138,7 +146,6 @@ function findBestMatch(records, currentPath) {
             bestMatch = record;
         }
     }
-    console.log(bestMatch)
     return bestMatch;
 }
 
@@ -175,7 +182,7 @@ async function deleteRecord(tab, sendResponse) {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     switch (request.action) {
         case 'recognizeCaptcha':
-            recognizeCaptcha(request.image, sendResponse);
+            recognizeCaptcha(request.image, request.captchaType, sendResponse);
             return true;
 
         case 'updateApiKeys':
