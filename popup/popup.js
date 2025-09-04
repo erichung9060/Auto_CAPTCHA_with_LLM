@@ -1,3 +1,5 @@
+var record_on_this_site;
+
 function showMessage(message, color) {
     const message_div = document.createElement('div');
     message_div.innerText = message;
@@ -97,8 +99,9 @@ async function loadCaptchaTypeSettings() {
     const records = result[hostname];
 
     if (records) {
-        const bestMatch = findBestMatch(records, path);
-        const radio = document.querySelector(`input[name="captchaType"][value="${bestMatch.captchaType}"]`);
+        record_on_this_site = findBestMatch(records, path);
+
+        const radio = document.querySelector(`input[name="captchaType"][value="${record_on_this_site.captchaType}"]`);
         radio.checked = true;
 
         const captchaTypeSection = document.getElementById('captchaTypeSection');
@@ -138,10 +141,9 @@ async function saveCaptchaTypeSettings() {
     
     const result = await chrome.storage.local.get(hostname);
     let records = result[hostname];
-    const bestMatch = findBestMatch(records, path);
 
     const selectedType = document.querySelector('input[name="captchaType"]:checked').value;
-    const recordIndex = records.findIndex(r => r.path === bestMatch.path);
+    const recordIndex = records.findIndex(r => r.path === record_on_this_site.path);
     records[recordIndex].captchaType = selectedType;
 
     await chrome.storage.local.set({ [hostname]: records });
