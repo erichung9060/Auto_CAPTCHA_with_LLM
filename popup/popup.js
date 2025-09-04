@@ -87,11 +87,14 @@ chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
 
 async function loadSettings() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab){
-        showMessage("No available tab found, please open the site you want to delete.", "red");
+    if (!tab || !tab.url){
+        document.getElementById('settings').classList.add('hidden');
+        showMessage("No available page found. Please open the site you want to record.", "red");
         return;
+    }else{
+        tab_id = tab.id;
     }
-    tab_id = tab.id;
+    
 
     hostname = new URL(tab.url).hostname;
     pathname = new URL(tab.url).pathname;
