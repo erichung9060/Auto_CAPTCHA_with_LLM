@@ -114,7 +114,7 @@ async function saveRecord(selectedCaptcha, selectedInput) {
     inputSelector = getElementSelector(selectedInput)
 
     let record = {
-        path: window.location.pathname,
+        pathname: window.location.pathname,
         captchaSelector: captchaSelector,
         inputSelector: inputSelector,
         captchaType: 'auto'
@@ -124,7 +124,7 @@ async function saveRecord(selectedCaptcha, selectedInput) {
     const result = await chrome.storage.local.get(hostname);
     let records = result[hostname] || [];
 
-    const recordIndex = records.findIndex(r => r.path === record.path);
+    const recordIndex = records.findIndex(r => r.pathname === record.pathname);
 
     if (recordIndex > -1) {
         records[recordIndex] = record;
@@ -142,13 +142,13 @@ function findBestMatch(records, currentPath) {
     let maxLen = 0;
 
     for (const record of records) {
-        if (currentPath === record.path) {
+        if (currentPath === record.pathname) {
             bestMatch = record;
             break;
         }
 
         let i = 0;
-        while (i < currentPath.length && i < record.path.length && currentPath[i] === record.path[i]) {
+        while (i < currentPath.length && i < record.pathname.length && currentPath[i] === record.pathname[i]) {
             i++;
         }
 

@@ -114,13 +114,13 @@ function findBestMatch(records, currentPath) {
     let maxLen = 0;
 
     for (const record of records) {
-        if (currentPath === record.path) {
+        if (currentPath === record.pathname) {
             bestMatch = record;
             break;
         }
 
         let i = 0;
-        while (i < currentPath.length && i < record.path.length && currentPath[i] === record.path[i]) {
+        while (i < currentPath.length && i < record.pathname.length && currentPath[i] === record.pathname[i]) {
             i++;
         }
 
@@ -139,7 +139,7 @@ async function saveCaptchaTypeSettings() {
     let { [hostname]: records } = await chrome.storage.local.get(hostname);
 
     const selectedType = document.querySelector('input[name="captchaType"]:checked').value;
-    const recordIndex = records.findIndex(r => r.path === record_on_this_site.path);
+    const recordIndex = records.findIndex(r => r.pathname === record_on_this_site.pathname);
     records[recordIndex].captchaType = selectedType;
 
     await chrome.storage.local.set({ [hostname]: records });

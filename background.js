@@ -131,13 +131,13 @@ function findBestMatch(records, currentPath) {
     let maxLen = 0;
 
     for (const record of records) {
-        if(currentPath === record.path) {
+        if(currentPath === record.pathname) {
             bestMatch = record;
             break;
         }
 
         let i = 0;
-        while (i < currentPath.length && i < record.path.length && currentPath[i] === record.path[i]) {
+        while (i < currentPath.length && i < record.pathname.length && currentPath[i] === record.pathname[i]) {
             i++;
         }
 
@@ -161,7 +161,7 @@ async function deleteRecord(tab, sendResponse) {
         }
 
         const bestMatch = findBestMatch(records, pathname);
-        const remainingRecords = records.filter(r => r.path !== bestMatch.path);
+        const remainingRecords = records.filter(r => r.pathname !== bestMatch.pathname);
 
         if (remainingRecords.length) {
             await chrome.storage.local.set({ [hostname]: remainingRecords });
@@ -173,7 +173,7 @@ async function deleteRecord(tab, sendResponse) {
             action: "deleteRecord"
         });
 
-        sendResponse({ isSuccess: true, message: `Successfully deleted record for ${hostname}${bestMatch.path}` });
+        sendResponse({ isSuccess: true, message: `Successfully deleted record for ${hostname}${bestMatch.pathname}` });
     } catch (error) {
         sendResponse({ isSuccess: false, error: error.toString() });
     }
