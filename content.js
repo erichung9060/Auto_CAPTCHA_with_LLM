@@ -1,5 +1,5 @@
 var captchaSelector, inputSelector, captchaType;
-var captcha, inputField;
+var captchaImage, inputField;
 
 
 function getBase64Image(img) {
@@ -161,18 +161,18 @@ function findBestMatch(records, currentPath) {
 }
 
 function deleteRecord() {
-    captcha.removeEventListener('load', recognizeAndFill);
-    captcha.removeAttribute('has-recognizeAndFill-listener');
+    captchaImage.removeEventListener('load', recognizeAndFill);
+    captchaImage.removeAttribute('has-recognizeAndFill-listener');
 
     inputField.value = "";
 
     captchaSelector = inputSelector = null;
-    captcha = inputField = null;
+    captchaImage = inputField = null;
     captchaType = null;
 }
 
 async function recognizeAndFill() {
-    let base64Image = getBase64Image(captcha)
+    let base64Image = getBase64Image(captchaImage)
         const response = await chrome.runtime.sendMessage({
         action: "recognizeCaptcha",
         image: base64Image,
@@ -189,11 +189,11 @@ async function recognizeAndFill() {
 }
 
 function process() {
-    if (captcha.complete) recognizeAndFill();
+    if (captchaImage.complete) recognizeAndFill();
 
-    if (!captcha.hasAttribute('has-recognizeAndFill-listener')) {
-        captcha.addEventListener('load', recognizeAndFill);
-        captcha.setAttribute('has-recognizeAndFill-listener', 'true');
+    if (!captchaImage.hasAttribute('has-recognizeAndFill-listener')) {
+        captchaImage.addEventListener('load', recognizeAndFill);
+        captchaImage.setAttribute('has-recognizeAndFill-listener', 'true');
     }
 }
 
@@ -211,10 +211,10 @@ function getElementBySelector(selector) {
 }
 
 function captchaElementExist() {
-    captcha = getElementBySelector(captchaSelector);
+    captchaImage = getElementBySelector(captchaSelector);
     inputField = getElementBySelector(inputSelector);
 
-    if (captcha && inputField) return true;
+    if (captchaImage && inputField) return true;
 
     return false;
 }
