@@ -152,12 +152,13 @@ function findBestMatch(records, currentPath) {
 async function deleteRecord(tab, sendResponse) {
     try {
         const hostname = new URL(tab.url).hostname;
+        const pathname = new URL(tab.url).pathname;
 
         const result = await chrome.storage.local.get(hostname);
         const records = result[hostname];
 
         if (records) {
-            const bestMatch = findBestMatch(records, new URL(tab.url).pathname);
+            const bestMatch = findBestMatch(records, pathname);
             const remainingRecords = records.filter(r => r.path !== bestMatch.path);
 
             if (remainingRecords.length) {
@@ -170,7 +171,7 @@ async function deleteRecord(tab, sendResponse) {
                 action: "deleteRecord"
             });
 
-            sendResponse({ isSuccess: true, message: `Successfully deleted record for ${hostname}` });
+            sendResponse({ isSuccess: true, message: `Successfully deleted record for ${hostname}${bestMatch.path}` });
         } else {
             sendResponse({ isSuccess: false, error: `No record found for ${hostname}` });
         }
