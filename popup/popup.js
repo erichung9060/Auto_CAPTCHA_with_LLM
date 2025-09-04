@@ -69,9 +69,12 @@ document.getElementById('deleteRecord').addEventListener('click', async () => {
 
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tab) {
-            let response = await chrome.runtime.sendMessage({ action: 'deleteRecord', tab });
+            let response = await deleteRecord(tab);
+
             if (response.isSuccess) showMessage(response.message, "green");
             else showMessage(response.error, "red");
+
+            chrome.tabs.sendMessage(tab.id, { action: "deleteRecord" });
         } else {
             showMessage("No available tab found, please open the site you want to delete.", "red");
         }
@@ -130,6 +133,31 @@ function findBestMatch(records, currentPath) {
         }
     }
     return bestMatch;
+}
+
+async function deleteRecord(tab) {
+    try {
+        const hostname = new URL(tab.url).hostname;
+        const pathname = new URL(tab.url).pathname;
+
+        const { [hostname]: records } = await chrome.storage.local.get(hostname);
+        if (!records) {
+            return { isSuccess: false, error: `No record found for ${hostname}`};
+        }
+
+        const bestMatch = findBestMatch(records, pathname);
+        const remainingRecords = records.filter(r => r.pathname !== bestMatch.pathname);
+
+        if (remainingRecords.length) {
+            await chrome.storage.local.set({ [hostname]: remainingRecords });
+        } else {
+            await chrome.storage.local.remove(hostname);
+        }
+
+        return { isSuccess: true, message: `Successfully deleted record for ${hostname}${bestMatch.pathname}` };
+    } catch (error) {
+        return { isSuccess: false, error: error.toString() };
+    }
 }
 
 async function saveCaptchaTypeSettings() {
