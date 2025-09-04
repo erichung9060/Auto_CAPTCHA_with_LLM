@@ -169,6 +169,8 @@ function deleteRecord() {
     captchaSelector = inputSelector = null;
     captchaImage = inputField = null;
     captchaType = null;
+
+    main();
 }
 
 async function recognizeAndFill() {
