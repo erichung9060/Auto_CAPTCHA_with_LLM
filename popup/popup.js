@@ -14,7 +14,7 @@ function showMessage(message, color) {
     }, 10 * 1000);
 }
 
-document.getElementById('saveKeys').addEventListener('click', async event => {
+async function saveApiKeys(event) {
     event.preventDefault();
     try {
         const geminiApiKey = document.getElementById('geminiKey').value;
@@ -30,18 +30,18 @@ document.getElementById('saveKeys').addEventListener('click', async event => {
     } catch (error) {
         showMessage(error.toString(), "red");
     }
-});
+}
 
-document.getElementById('startRecording').addEventListener('click', async () => {
+async function startRecording() {
     const startRecordingButton = document.getElementById('startRecording');
     startRecordingButton.innerText = "Recording";
     startRecordingButton.disabled = true;
 
     showMessage("Please click the CAPTCHA IMAGE", "red");
     await chrome.tabs.sendMessage(tab_id, { action: "startRecording" });
-});
+}
 
-document.getElementById('deleteRecord').addEventListener('click', async () => {
+async function deleteRecord() {
     const confirmDialog = document.createElement('div');
     confirmDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center';
     confirmDialog.innerHTML = `
@@ -78,12 +78,62 @@ document.getElementById('deleteRecord').addEventListener('click', async () => {
     document.getElementById('confirmNo').addEventListener('click', () => {
         confirmDialog.remove();
     });
+}
+
+async function saveCaptchaTypeSettings() {
+    try {
+        const selectedType = document.querySelector('input[name="captchaType"]:checked').value;
+
+        var new_records = records_unber_hostname;
+        const recordIndex = new_records.findIndex(r => r.pathname === record_on_this_site.pathname);
+        new_records[recordIndex].captchaType = selectedType;
+        await chrome.storage.local.set({ [hostname]: new_records });
+
+        const typeDisplayMap = {
+            'numbersOnly': 'Numbers Only',
+            'lettersOnly': 'Letters Only',
+            'auto': 'Auto Detect'
+        };
+
+        showMessage(`CAPTCHA type setting saved: ${typeDisplayMap[selectedType]}`, "green");
+        await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
+        loadSettings();
+    } catch (error) {
+        showMessage(error.toString(), "red");
+    }
+}
+
+document.getElementById('saveKeys').addEventListener('click', saveApiKeys);
+document.getElementById('startRecording').addEventListener('click', startRecording);
+document.getElementById('deleteRecord').addEventListener('click', deleteRecord);
+document.querySelectorAll('input[name="captchaType"]').forEach(radio => {
+    radio.addEventListener('change', saveCaptchaTypeSettings);
 });
 
-chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
-    document.getElementById('geminiKey').value = result.geminiApiKey || '';
-    document.getElementById('cloudVisionKey').value = result.cloudVisionApiKey || '';
-});
+function findBestMatch(records, currentPath) {
+    if (!records || records.length === 0) return null;
+
+    let bestMatch = null;
+    let maxLen = 0;
+
+    for (const record of records) {
+        if (currentPath === record.pathname) {
+            bestMatch = record;
+            break;
+        }
+
+        let i = 0;
+        while (i < currentPath.length && i < record.pathname.length && currentPath[i] === record.pathname[i]) {
+            i++;
+        }
+
+        if (i > maxLen) {
+            maxLen = i;
+            bestMatch = record;
+        }
+    }
+    return bestMatch;
+}
 
 async function loadSettings() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -114,59 +164,11 @@ async function loadSettings() {
         document.getElementById('captchaTypeSection').classList.add('hidden');
         document.getElementById('deleteRecord').classList.add('hidden');
     }
+
+    chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
+        document.getElementById('geminiKey').value = result.geminiApiKey || '';
+        document.getElementById('cloudVisionKey').value = result.cloudVisionApiKey || '';
+    });
 }
-
-function findBestMatch(records, currentPath) {
-    if (!records || records.length === 0) return null;
-
-    let bestMatch = null;
-    let maxLen = 0;
-
-    for (const record of records) {
-        if (currentPath === record.pathname) {
-            bestMatch = record;
-            break;
-        }
-
-        let i = 0;
-        while (i < currentPath.length && i < record.pathname.length && currentPath[i] === record.pathname[i]) {
-            i++;
-        }
-
-        if (i > maxLen) {
-            maxLen = i;
-            bestMatch = record;
-        }
-    }
-    return bestMatch;
-}
-
-
-async function saveCaptchaTypeSettings() {
-    try {
-        const selectedType = document.querySelector('input[name="captchaType"]:checked').value;
-
-        var new_records = records_unber_hostname;
-        const recordIndex = new_records.findIndex(r => r.pathname === record_on_this_site.pathname);
-        new_records[recordIndex].captchaType = selectedType;
-        await chrome.storage.local.set({ [hostname]: new_records });
-
-        const typeDisplayMap = {
-            'numbersOnly': 'Numbers Only',
-            'lettersOnly': 'Letters Only',
-            'auto': 'Auto Detect'
-        };
-
-        showMessage(`CAPTCHA type setting saved: ${typeDisplayMap[selectedType]}`, "green");
-        await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
-        loadSettings();
-    } catch (error) {
-        showMessage(error.toString(), "red");
-    }
-}
-
-document.querySelectorAll('input[name="captchaType"]').forEach(radio => {
-    radio.addEventListener('change', saveCaptchaTypeSettings);
-});
 
 loadSettings();
