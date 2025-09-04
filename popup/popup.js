@@ -106,9 +106,11 @@ async function loadSettings() {
         radio.checked = true;
 
         document.getElementById('captchaTypeSection').classList.remove('hidden');
+        document.getElementById('deleteRecord').classList.remove('hidden');
     } else {
         record_on_this_site = null;
         document.getElementById('captchaTypeSection').classList.add('hidden');
+        document.getElementById('deleteRecord').classList.add('hidden');
     }
 }
 
