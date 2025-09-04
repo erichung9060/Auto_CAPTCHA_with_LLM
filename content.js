@@ -221,18 +221,17 @@ function captchaElementExist() {
 
 async function main() {
     const hostname = window.location.hostname;
-    const result = await chrome.storage.local.get(hostname);
-    const records = result[hostname];
-    const bestMatch = findBestMatch(records, window.location.pathname);
+    const pathname = window.location.pathname;
 
-    if (bestMatch) {
-        console.log("[Auto CAPTCHA with LLM] Found Record: ", bestMatch);
-        captchaSelector = bestMatch.captchaSelector;
-        inputSelector = bestMatch.inputSelector;
-        captchaType = bestMatch.captchaType;
-    } else {
-        return;
-    }
+    const { [hostname]: records } = await chrome.storage.local.get(hostname);
+    if (!records) return;
+
+    const bestMatch = findBestMatch(records, pathname);
+    console.log("[Auto CAPTCHA with LLM] Found Record: ", bestMatch);
+
+    captchaSelector = bestMatch.captchaSelector;
+    inputSelector = bestMatch.inputSelector;
+    captchaType = bestMatch.captchaType;
 
     if (captchaElementExist()) {
         process();

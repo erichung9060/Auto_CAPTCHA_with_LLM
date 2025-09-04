@@ -154,27 +154,26 @@ async function deleteRecord(tab, sendResponse) {
         const hostname = new URL(tab.url).hostname;
         const pathname = new URL(tab.url).pathname;
 
-        const result = await chrome.storage.local.get(hostname);
-        const records = result[hostname];
-
-        if (records) {
-            const bestMatch = findBestMatch(records, pathname);
-            const remainingRecords = records.filter(r => r.path !== bestMatch.path);
-
-            if (remainingRecords.length) {
-                await chrome.storage.local.set({ [hostname]: remainingRecords });
-            } else {
-                await chrome.storage.local.remove(hostname);
-            }
-
-            chrome.tabs.sendMessage(tab.id, {
-                action: "deleteRecord"
-            });
-
-            sendResponse({ isSuccess: true, message: `Successfully deleted record for ${hostname}${bestMatch.path}` });
-        } else {
+        const { [hostname]: records } = await chrome.storage.local.get(hostname);
+        if (!records) {
             sendResponse({ isSuccess: false, error: `No record found for ${hostname}` });
+            return;
         }
+
+        const bestMatch = findBestMatch(records, pathname);
+        const remainingRecords = records.filter(r => r.path !== bestMatch.path);
+
+        if (remainingRecords.length) {
+            await chrome.storage.local.set({ [hostname]: remainingRecords });
+        } else {
+            await chrome.storage.local.remove(hostname);
+        }
+
+        chrome.tabs.sendMessage(tab.id, {
+            action: "deleteRecord"
+        });
+
+        sendResponse({ isSuccess: true, message: `Successfully deleted record for ${hostname}${bestMatch.path}` });
     } catch (error) {
         sendResponse({ isSuccess: false, error: error.toString() });
     }

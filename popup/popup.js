@@ -93,20 +93,18 @@ chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
 async function loadCaptchaTypeSettings() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     const hostname = new URL(tab.url).hostname;
-    const path = new URL(tab.url).pathname;
+    const pathname = new URL(tab.url).pathname;
     
-    const result = await chrome.storage.local.get(hostname);
-    const records = result[hostname];
+    const { [hostname]: records } = await chrome.storage.local.get(hostname);
+    if (!records) return;
 
-    if (records) {
-        record_on_this_site = findBestMatch(records, path);
+    record_on_this_site = findBestMatch(records, pathname);
 
-        const radio = document.querySelector(`input[name="captchaType"][value="${record_on_this_site.captchaType}"]`);
-        radio.checked = true;
+    const radio = document.querySelector(`input[name="captchaType"][value="${record_on_this_site.captchaType}"]`);
+    radio.checked = true;
 
-        const captchaTypeSection = document.getElementById('captchaTypeSection');
-        captchaTypeSection.classList.remove('hidden');
-    }
+    const captchaTypeSection = document.getElementById('captchaTypeSection');
+    captchaTypeSection.classList.remove('hidden');
 }
 
 function findBestMatch(records, currentPath) {
@@ -137,10 +135,8 @@ function findBestMatch(records, currentPath) {
 async function saveCaptchaTypeSettings() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     const hostname = new URL(tab.url).hostname;
-    const path = new URL(tab.url).pathname;
     
-    const result = await chrome.storage.local.get(hostname);
-    let records = result[hostname];
+    let { [hostname]: records } = await chrome.storage.local.get(hostname);
 
     const selectedType = document.querySelector('input[name="captchaType"]:checked').value;
     const recordIndex = records.findIndex(r => r.path === record_on_this_site.path);
