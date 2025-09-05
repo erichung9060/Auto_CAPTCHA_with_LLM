@@ -25,6 +25,29 @@
                         Save Keys
                     </button>
                 </form>
+                <div class="space-y-2">
+                    <button type="button" id="toggleAdvancedSettings"
+                        class="w-full bg-gray-500 text-white py-2 rounded-lg font-medium hover:bg-gray-600 flex items-center justify-center">
+                        <span id="advancedToggleText">Show Advanced Settings ▼</span>
+                    </button>
+                    <div id="advancedSettingsSection" class="hidden space-y-2">
+                        <hr>
+                        <form id="advancedSettingsForm" class="space-y-2">
+                            <h2 class="text-lg font-semibold text-gray-800">Advanced Model Settings</h2>
+                            <div class="space-y-1">
+                                <label for="customModel" class="block text-sm font-medium text-gray-600">Custom Model</label>
+                                <p class="text-xs text-gray-500">default: gemini-2.0-flash</p>
+                                <input id="customModel" type="text" placeholder="e.g., gemini-2.5-pro, gemini-2.5-flash"
+                                    class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <button type="submit" id="saveAdvancedSettings"
+                                class="w-full bg-purple-500 text-white py-2 rounded-lg font-medium hover:bg-purple-600">
+                                Save Advanced Settings
+                            </button>
+                        </form>
+                        <hr>
+                    </div>
+                </div>
                 <div id="captchaTypeSection" class="hidden">
                     <hr>
                     <div class="space-y-2">

@@ -1,5 +1,6 @@
-const GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 const CLOUD_VISION_API_ENDPOINT = 'https://vision.googleapis.com/v1/images:annotate';
+const DEFAULT_GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta';
+const DEFAULT_GEMINI_MODEL = 'gemini-2.0-flash';
 
 async function recognize_by_CloudVision(base64Image, CloudVisionApiKey) {
     const apiUrl = `${CLOUD_VISION_API_ENDPOINT}?key=${CloudVisionApiKey}`;
@@ -46,17 +47,17 @@ async function recognize_by_CloudVision(base64Image, CloudVisionApiKey) {
     }
 }
 
-async function recognize_by_Gemini(base64Image, captchaType, GeminiApiKey) {
-    const apiUrl = `${GEMINI_API_ENDPOINT}?key=${GeminiApiKey}`;
-
+async function recognize_by_Gemini(base64Image, captchaType, GeminiApiKey, customModel) {
+    const model = customModel || DEFAULT_GEMINI_MODEL;
+    let apiUrl = `${DEFAULT_GEMINI_API_ENDPOINT}/models/${model}:generateContent?key=${GeminiApiKey}`;
+    
     let prompt = 'Please analyze this CAPTCHA image. The image contains digits or numbers or words with some noise/distortion. Return only the CAPTCHA numbers or digits or words without any additional text or explanation.';
-
     if (captchaType === 'numbersOnly') {
         prompt = 'Please analyze this CAPTCHA image. The image only contains numbers/digits with some noise/distortion. Return only the CAPTCHA numbers without any additional text or explanation.';
     } else if (captchaType === 'lettersOnly') {
         prompt = 'Please analyze this CAPTCHA image. The image only contains letters/alphabetic characters with some noise/distortion. Return only the CAPTCHA letters without any additional text or explanation.';
     }
-    console.log(prompt)
+
     const body = {
         contents: [
             {
@@ -98,14 +99,15 @@ async function recognize_by_Gemini(base64Image, captchaType, GeminiApiKey) {
 }
 
 async function recognizeCaptcha(image, captchaType, sendResponse) {
-    const result = await chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey']);
-    const GeminiApiKey = result.geminiApiKey || '';
-    const CloudVisionApiKey = result.cloudVisionApiKey || '';
+    const result = await chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey', 'customModel']);
+    const GeminiApiKey = result.geminiApiKey;
+    const CloudVisionApiKey = result.cloudVisionApiKey;
+    const customModel = result.customModel;
 
-    if (CloudVisionApiKey !== '') {
+    if (CloudVisionApiKey) {
         sendResponse(await recognize_by_CloudVision(image, CloudVisionApiKey));
-    } else if (GeminiApiKey !== '') {
-        sendResponse(await recognize_by_Gemini(image, captchaType, GeminiApiKey));
+    } else if (GeminiApiKey) {
+        sendResponse(await recognize_by_Gemini(image, captchaType, GeminiApiKey, customModel));
     } else {
         sendResponse({ isSuccess: false, error: "No API key found" });
     }

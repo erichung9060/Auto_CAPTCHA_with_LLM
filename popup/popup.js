@@ -32,6 +32,36 @@ async function saveApiKeys(event) {
     }
 }
 
+async function saveAdvancedSettings(event) {
+    event.preventDefault();
+    try {
+        const customModel = document.getElementById('customModel').value;
+
+        await chrome.storage.local.set({
+            customModel: customModel
+        });
+
+        showMessage("Successfully updated advanced settings!", "green");
+        toggleAdvancedSettings();
+        await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
+    } catch (error) {
+        showMessage(error.toString(), "red");
+    }
+}
+
+function toggleAdvancedSettings() {
+    const advancedSection = document.getElementById('advancedSettingsSection');
+    const toggleText = document.getElementById('advancedToggleText');
+    
+    if (advancedSection.classList.contains('hidden')) {
+        advancedSection.classList.remove('hidden');
+        toggleText.textContent = 'Hide Advanced Settings ▲';
+    } else {
+        advancedSection.classList.add('hidden');
+        toggleText.textContent = 'Show Advanced Settings ▼';
+    }
+}
+
 async function startRecording() {
     const startRecordingButton = document.getElementById('startRecording');
     startRecordingButton.innerText = "Recording";
@@ -106,6 +136,8 @@ async function saveCaptchaTypeSettings() {
 document.getElementById('saveKeys').addEventListener('click', saveApiKeys);
 document.getElementById('startRecording').addEventListener('click', startRecording);
 document.getElementById('deleteRecord').addEventListener('click', deleteRecord);
+document.getElementById('toggleAdvancedSettings').addEventListener('click', toggleAdvancedSettings);
+document.getElementById('advancedSettingsForm').addEventListener('submit', saveAdvancedSettings);
 document.querySelectorAll('input[name="captchaType"]').forEach(radio => {
     radio.addEventListener('change', saveCaptchaTypeSettings);
 });
@@ -165,9 +197,10 @@ async function loadSettings() {
         document.getElementById('deleteRecord').classList.add('hidden');
     }
 
-    chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey'], (result) => {
+    chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey', 'customModel'], (result) => {
         document.getElementById('geminiKey').value = result.geminiApiKey || '';
         document.getElementById('cloudVisionKey').value = result.cloudVisionApiKey || '';
+        document.getElementById('customModel').value = result.customModel || '';
     });
 }
 
