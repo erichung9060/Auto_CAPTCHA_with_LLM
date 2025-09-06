@@ -1,18 +1,50 @@
 var records_unber_hostname, record_on_this_site;
 var hostname, pathname, tab_id;
 
-function showMessage(message, color) {
-    const message_div = document.createElement('div');
-    message_div.innerText = message;
-    message_div.style.color = color;
-    message_div.style.fontWeight = "bold";
-    message_div.style.marginTop = "10px";
-    message_div.style.textAlign = "center";
-    document.getElementById('body').appendChild(message_div);
-    setTimeout(() => {
-        message_div.remove();
-    }, 10 * 1000);
+let notificationTimer = null;
+
+function showNotification(message, notificationType = 'success') {
+    const notificationBar = document.getElementById('notification-bar');
+    const notificationText = document.getElementById('notification-text');
+    const body = document.getElementById('body');
+    
+    if (notificationTimer) {
+        clearTimeout(notificationTimer);
+        notificationTimer = null;
+    }
+    
+    notificationText.textContent = message;
+
+    notificationBar.classList.remove('success', 'error');
+    notificationBar.classList.add(notificationType);
+    notificationBar.classList.remove('hidden', 'hiding');
+
+    body.classList.add('has-notification');
+    
+    notificationTimer = setTimeout(() => {
+        hideNotification();
+    }, 5000);
 }
+
+function hideNotification() {
+    const notificationBar = document.getElementById('notification-bar');
+    const body = document.getElementById('body');
+    
+    if (notificationTimer) {
+        clearTimeout(notificationTimer);
+        notificationTimer = null;
+    }
+    
+    notificationBar.classList.add('hiding');
+    
+    setTimeout(() => {
+        notificationBar.classList.add('hidden');
+        notificationBar.classList.remove('hiding');
+        body.classList.remove('has-notification');
+    }, 300);
+}
+
+document.getElementById('notification-close').addEventListener('click', hideNotification);
 
 async function saveApiKeys(event) {
     event.preventDefault();
@@ -25,10 +57,10 @@ async function saveApiKeys(event) {
             cloudVisionApiKey: cloudVisionApiKey
         });
 
-        showMessage("Successfully updated the API keys!", "green");
+        showNotification("Successfully updated the API keys!");
         await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
     } catch (error) {
-        showMessage(error.toString(), "red");
+        showNotification(error.toString(), "error");
     }
 }
 
@@ -41,11 +73,11 @@ async function saveAdvancedSettings(event) {
             customModel: customModel
         });
 
-        showMessage("Successfully updated advanced settings!", "green");
+        showNotification("Successfully updated advanced settings!");
         toggleAdvancedSettings();
         await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
     } catch (error) {
-        showMessage(error.toString(), "red");
+        showNotification(error.toString(), "error");
     }
 }
 
@@ -67,7 +99,7 @@ async function startRecording() {
     startRecordingButton.innerText = "Recording";
     startRecordingButton.disabled = true;
 
-    showMessage("Please click the CAPTCHA IMAGE", "red");
+    showNotification("Please click the CAPTCHA IMAGE", "warning");
     await chrome.tabs.sendMessage(tab_id, { action: "startRecording" });
 }
 
@@ -97,11 +129,11 @@ async function deleteRecord() {
                 await chrome.storage.local.remove(hostname);
             }
 
-            showMessage(`Successfully deleted record for ${hostname}${record_on_this_site.pathname}`, "green");
+            showNotification(`Successfully deleted record for ${hostname}${record_on_this_site.pathname}`);
             chrome.tabs.sendMessage(tab_id, { action: "deleteRecord" });
             loadSettings();
         } catch (error) {
-            showMessage(error.toString(), "red");
+            showNotification(error.toString(), "error");
         }
     });
 
@@ -125,11 +157,11 @@ async function saveCaptchaTypeSettings() {
             'auto': 'Auto Detect'
         };
 
-        showMessage(`CAPTCHA type setting saved: ${typeDisplayMap[selectedType]}`, "green");
+        showNotification(`CAPTCHA type setting saved: ${typeDisplayMap[selectedType]}`);
         await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
         loadSettings();
     } catch (error) {
-        showMessage(error.toString(), "red");
+        showNotification(error.toString(), "error");
     }
 }
 
@@ -171,7 +203,7 @@ async function loadSettings() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab || !tab.url) {
         document.getElementById('settings').classList.add('hidden');
-        showMessage("No available page found. Please open the site you want to record.", "red");
+        showNotification("No available page found. Please open the site you want to record.", "error");
         return;
     } else {
         tab_id = tab.id;

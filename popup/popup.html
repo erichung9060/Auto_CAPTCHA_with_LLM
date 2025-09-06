@@ -5,9 +5,26 @@
         <title>API Key Manager</title>
         <link href="tailwind.css" rel="stylesheet">
     </head>
-    <body class="flex items-center justify-center">
-        <div id="body" class="w-80 p-4">
-            <div id="settings" class="rounded-2xl space-y-2">
+    <body class="bg-gray-50">
+        <div id="body" class="w-80 shadow-xl rounded-xl overflow-hidden bg-white">
+            <div id="notification-bar" class="notification-bar hidden">
+                <div class="notification-content">
+                    <div class="notification-icon">
+                        <svg class="notification-icon-svg" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="notification-message">
+                        <span id="notification-text"></span>
+                    </div>
+                    <button id="notification-close" class="notification-close">
+                        <svg class="notification-close-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="settings" class="main-content space-y-2 p-4">
                 <form class="space-y-2">
                     <h1 class="text-xl font-semibold text-gray-800">API Key Manager</h1>
                     <div class="space-y-1">

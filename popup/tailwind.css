@@ -549,3 +549,128 @@ video {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(59 130 246 / var(--tw-ring-opacity));
 }
+
+.notification-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: slideDown 0.3s ease-out;
+  margin: 4px;
+  margin-bottom: 0;
+}
+
+.notification-bar.success {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+}
+
+.notification-bar.error {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+}
+
+.notification-bar.warning {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.notification-bar.info {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 12px;
+}
+
+.notification-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: white;
+  opacity: 0.9;
+}
+
+.notification-icon-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.notification-message {
+  flex: 1;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.notification-close {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: white;
+  opacity: 0.8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-close:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.notification-close-icon {
+  width: 100%;
+  height: 100%;
+}
+
+.main-content {
+  background: white;
+  margin: 4px;
+  margin-top: 0;
+  border-radius: 0 0 12px 12px;
+}
+
+#body.has-notification .main-content {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+#body:not(.has-notification) .main-content {
+  border-radius: 12px;
+  margin-top: 4px;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+.notification-bar.hiding {
+  animation: slideUp 0.3s ease-in forwards;
+}
