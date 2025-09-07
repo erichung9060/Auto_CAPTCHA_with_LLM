@@ -1,7 +1,8 @@
 var records_unber_hostname, record_on_this_site;
-var hostname, pathname, tab_id;
+var hostname, pathname;
 
-let notificationTimer = null;
+var tab_id;
+var notificationTimer;
 
 function showNotification(message, notificationType = 'success') {
     const notificationBar = document.getElementById('notification-bar');
@@ -58,7 +59,7 @@ async function saveApiKeys(event) {
         });
 
         showNotification("Successfully updated the API keys!");
-        await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
+        if(tab_id) await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
     } catch (error) {
         showNotification(error.toString(), "error");
     }
@@ -75,7 +76,7 @@ async function saveAdvancedSettings(event) {
 
         showNotification("Successfully updated advanced settings!");
         toggleAdvancedSettings();
-        await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
+        if(tab_id) await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
     } catch (error) {
         showNotification(error.toString(), "error");
     }
@@ -100,7 +101,7 @@ async function startRecording() {
     startRecordingButton.disabled = true;
 
     showNotification("Please click the CAPTCHA IMAGE", "warning");
-    await chrome.tabs.sendMessage(tab_id, { action: "startRecording" });
+    if(tab_id) await chrome.tabs.sendMessage(tab_id, { action: "startRecording" });
 }
 
 async function deleteRecord() {
@@ -130,7 +131,7 @@ async function deleteRecord() {
             }
 
             showNotification(`Successfully deleted record for ${hostname}${record_on_this_site.pathname}`);
-            chrome.tabs.sendMessage(tab_id, { action: "deleteRecord" });
+            if(tab_id) chrome.tabs.sendMessage(tab_id, { action: "deleteRecord" });
             loadSettings();
         } catch (error) {
             showNotification(error.toString(), "error");
@@ -158,7 +159,7 @@ async function saveCaptchaTypeSettings() {
         };
 
         showNotification(`CAPTCHA type setting saved: ${typeDisplayMap[selectedType]}`);
-        await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
+        if(tab_id) await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
         loadSettings();
     } catch (error) {
         showNotification(error.toString(), "error");
@@ -200,15 +201,23 @@ function findBestMatch(records, currentPath) {
 }
 
 async function loadSettings() {
+    chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey', 'customModel'], (result) => {
+        document.getElementById('geminiKey').value = result.geminiApiKey || '';
+        document.getElementById('cloudVisionKey').value = result.cloudVisionApiKey || '';
+        document.getElementById('customModel').value = result.customModel || '';
+    });
+
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab || !tab.url) {
-        document.getElementById('settings').classList.add('hidden');
-        showNotification("No available page found. Please open the site you want to record.", "error");
+    try {
+        await chrome.tabs.sendMessage(tab.id, { action: "health" });
+    } catch (e) {
+        console.log(e)
+        showNotification("No available page found. Please open or reload the site you want to record.", "error");
+        document.getElementById('startRecording').classList.add('hidden');
         return;
-    } else {
-        tab_id = tab.id;
     }
 
+    tab_id = tab.id;
     hostname = new URL(tab.url).hostname;
     pathname = new URL(tab.url).pathname;
 
@@ -228,12 +237,6 @@ async function loadSettings() {
         document.getElementById('captchaTypeSection').classList.add('hidden');
         document.getElementById('deleteRecord').classList.add('hidden');
     }
-
-    chrome.storage.local.get(['geminiApiKey', 'cloudVisionApiKey', 'customModel'], (result) => {
-        document.getElementById('geminiKey').value = result.geminiApiKey || '';
-        document.getElementById('cloudVisionKey').value = result.cloudVisionApiKey || '';
-        document.getElementById('customModel').value = result.customModel || '';
-    });
 }
 
 loadSettings();
