@@ -30,18 +30,18 @@ async function recognize_by_CloudVision(base64Image, CloudVisionApiKey) {
 
     try {
         const data = await response.json();
-        console.log("CloudVision API respone:", data)
+        console.log("CloudVision API respone:", data);
 
         if (data.error) return { isSuccess: false, error: data.error.message }
 
         if (!data.responses[0] || !data.responses[0].fullTextAnnotation) {
-            return { isSuccess: false, error: "No text detected in image." };
+            return { isSuccess: false, error: "No text detected in image." }
         }
 
         let verificationCode = data.responses[0].fullTextAnnotation.text;
         verificationCode = verificationCode.match(/[a-zA-Z0-9]+/g).join('');
 
-        return { isSuccess: true, verificationCode: verificationCode };
+        return { isSuccess: true, verificationCode: verificationCode }
     } catch (error) {
         return { isSuccess: false, error: error.toString() }
     }
@@ -82,10 +82,11 @@ async function recognize_by_Gemini(base64Image, captchaType, GeminiApiKey, custo
 
     try {
         const data = await response.json();
-        console.log("Gemini API respone:", data)
+        console.log("Gemini API respone:", data);
+
         if (data.error) return { isSuccess: false, error: data.error.message }
 
-        let verificationCode = data.candidates[0].content.parts[0].text.trim()
+        let verificationCode = data.candidates[0].content.parts[0].text.trim();
 
         const alpnum_matches = verificationCode.match(/[a-zA-Z0-9]+/g);
         if (alpnum_matches) {

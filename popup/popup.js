@@ -27,6 +27,7 @@ function showNotification(message, notificationType = 'success') {
     }, 5000);
 }
 
+document.getElementById('notification-close').addEventListener('click', hideNotification);
 function hideNotification() {
     const notificationBar = document.getElementById('notification-bar');
     const body = document.getElementById('body');
@@ -45,8 +46,7 @@ function hideNotification() {
     }, 300);
 }
 
-document.getElementById('notification-close').addEventListener('click', hideNotification);
-
+document.getElementById('saveApiKeys').addEventListener('click', saveApiKeys);
 async function saveApiKeys(event) {
     event.preventDefault();
     try {
@@ -65,6 +65,21 @@ async function saveApiKeys(event) {
     }
 }
 
+document.getElementById('toggleAdvancedSettings').addEventListener('click', toggleAdvancedSettings);
+function toggleAdvancedSettings() {
+    const advancedSection = document.getElementById('advancedSettingsSection');
+    const toggleText = document.getElementById('advancedToggleText');
+    
+    if (advancedSection.classList.contains('hidden')) {
+        advancedSection.classList.remove('hidden');
+        toggleText.textContent = 'Hide Advanced Settings ▲';
+    } else {
+        advancedSection.classList.add('hidden');
+        toggleText.textContent = 'Show Advanced Settings ▼';
+    }
+}
+
+document.getElementById('advancedSettingsForm').addEventListener('submit', saveAdvancedSettings);
 async function saveAdvancedSettings(event) {
     event.preventDefault();
     try {
@@ -82,19 +97,33 @@ async function saveAdvancedSettings(event) {
     }
 }
 
-function toggleAdvancedSettings() {
-    const advancedSection = document.getElementById('advancedSettingsSection');
-    const toggleText = document.getElementById('advancedToggleText');
-    
-    if (advancedSection.classList.contains('hidden')) {
-        advancedSection.classList.remove('hidden');
-        toggleText.textContent = 'Hide Advanced Settings ▲';
-    } else {
-        advancedSection.classList.add('hidden');
-        toggleText.textContent = 'Show Advanced Settings ▼';
+document.querySelectorAll('input[name="captchaType"]').forEach(radio => {
+    radio.addEventListener('change', saveCaptchaTypeSettings);
+});
+async function saveCaptchaTypeSettings() {
+    try {
+        const selectedType = document.querySelector('input[name="captchaType"]:checked').value;
+
+        var new_records = records_unber_hostname;
+        const recordIndex = new_records.findIndex(r => r.pathname === record_on_this_site.pathname);
+        new_records[recordIndex].captchaType = selectedType;
+        await chrome.storage.local.set({ [hostname]: new_records });
+
+        const typeDisplayMap = {
+            'numbersOnly': 'Numbers Only',
+            'lettersOnly': 'Letters Only',
+            'auto': 'Auto Detect'
+        };
+
+        showNotification(`CAPTCHA type setting saved: ${typeDisplayMap[selectedType]}`);
+        if(tab_id) await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
+        loadSettings();
+    } catch (error) {
+        showNotification(error.toString(), "error");
     }
 }
 
+document.getElementById('startRecording').addEventListener('click', startRecording);
 async function startRecording() {
     const startRecordingButton = document.getElementById('startRecording');
     startRecordingButton.innerText = "Recording";
@@ -104,6 +133,7 @@ async function startRecording() {
     if(tab_id) await chrome.tabs.sendMessage(tab_id, { action: "startRecording" });
 }
 
+document.getElementById('deleteRecord').addEventListener('click', deleteRecord);
 async function deleteRecord() {
     const confirmDialog = document.createElement('div');
     confirmDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center';
@@ -142,38 +172,6 @@ async function deleteRecord() {
         confirmDialog.remove();
     });
 }
-
-async function saveCaptchaTypeSettings() {
-    try {
-        const selectedType = document.querySelector('input[name="captchaType"]:checked').value;
-
-        var new_records = records_unber_hostname;
-        const recordIndex = new_records.findIndex(r => r.pathname === record_on_this_site.pathname);
-        new_records[recordIndex].captchaType = selectedType;
-        await chrome.storage.local.set({ [hostname]: new_records });
-
-        const typeDisplayMap = {
-            'numbersOnly': 'Numbers Only',
-            'lettersOnly': 'Letters Only',
-            'auto': 'Auto Detect'
-        };
-
-        showNotification(`CAPTCHA type setting saved: ${typeDisplayMap[selectedType]}`);
-        if(tab_id) await chrome.tabs.sendMessage(tab_id, { action: "fillInCaptcha" });
-        loadSettings();
-    } catch (error) {
-        showNotification(error.toString(), "error");
-    }
-}
-
-document.getElementById('saveKeys').addEventListener('click', saveApiKeys);
-document.getElementById('startRecording').addEventListener('click', startRecording);
-document.getElementById('deleteRecord').addEventListener('click', deleteRecord);
-document.getElementById('toggleAdvancedSettings').addEventListener('click', toggleAdvancedSettings);
-document.getElementById('advancedSettingsForm').addEventListener('submit', saveAdvancedSettings);
-document.querySelectorAll('input[name="captchaType"]').forEach(radio => {
-    radio.addEventListener('change', saveCaptchaTypeSettings);
-});
 
 function findBestMatch(records, currentPath) {
     if (!records || records.length === 0) return null;
