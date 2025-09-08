@@ -7,6 +7,8 @@ A chrome extension for automatically solves CAPTCHAs and fills the verification 
   <img src="https://github.com/user-attachments/assets/d4fad3b9-172e-4849-bfd1-9fe118c44266" width="49%">
 </p>
 
+https://github.com/user-attachments/assets/b6a6c7c8-4166-46c1-aa32-db3bab093e03
+
 ## ✨ Features
 
 *   🔍 **Auto CAPTCHA Solving:** Detects CAPTCHA images, analyzes them with LLM, and fills in the code automatically.
