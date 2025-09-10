@@ -114,10 +114,38 @@ async function recognizeCaptcha(image, captchaType, sendResponse) {
     }
 }
 
+async function fetchImageAsBase64(url, sendResponse) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        const reader = new FileReader();
+        
+        reader.onloadend = () => {
+            const base64 = reader.result.split(',')[1];
+            sendResponse({ success: true, base64: base64 });
+        };
+        
+        reader.onerror = () => {
+            sendResponse({ success: false, error: 'Failed to convert blob to base64' });
+        };
+        
+        reader.readAsDataURL(blob);
+    } catch (error) {
+        sendResponse({ success: false, error: error.message });
+    }
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     switch (request.action) {
         case 'recognizeCaptcha':
             recognizeCaptcha(request.image, request.captchaType, sendResponse);
+            return true;
+        case 'fetchImage':
+            fetchImageAsBase64(request.url, sendResponse);
             return true;
     }
 });

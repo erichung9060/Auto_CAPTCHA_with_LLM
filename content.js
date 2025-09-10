@@ -2,15 +2,28 @@ var captchaSelector, inputSelector, captchaType;
 var captchaImage, inputField;
 
 
-function getBase64Image(img) {
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
+async function getBase64Image(img) {
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
 
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
 
-    return canvas.toDataURL('image/png').split(',')[1];
+        return canvas.toDataURL('image/png').split(',')[1];
+    } catch (e) {
+        const response = await chrome.runtime.sendMessage({
+            action: "fetchImage",
+            url: img.src
+        });
+        
+        if (response && response.success) {
+            return response.base64;
+        }else{
+            return null;
+        }
+    }
 }
 
 async function handleRecording() {
@@ -174,7 +187,7 @@ function deleteRecord() {
 }
 
 async function recognizeAndFill() {
-    let base64Image = getBase64Image(captchaImage)
+    let base64Image = await getBase64Image(captchaImage)
     const response = await chrome.runtime.sendMessage({
         action: "recognizeCaptcha",
         image: base64Image,
