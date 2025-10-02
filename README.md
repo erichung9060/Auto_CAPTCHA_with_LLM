@@ -1,6 +1,6 @@
 # 🤖 Auto CAPTCHA with LLM
 
-A chrome extension for automatically solves CAPTCHAs and fills the verification code using LLM (Gemini, Cloud Vision AI) on any websites.
+A chrome extension for automatically solves CAPTCHAs and fills the verification code using LLM or detection model (Gemini, Google Cloud Vision AI) on any websites.
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/0fb8e861-44a1-4d11-88be-cde883d04e38" width="49%">
@@ -19,7 +19,7 @@ https://github.com/user-attachments/assets/b6a6c7c8-4166-46c1-aa32-db3bab093e03
 
 1.  📦 **Install the Extension** from [Chrome Web Store](https://chromewebstore.google.com/detail/auto-captcha-with-llm/opmhaocokfchpadepjolomhlgeopjdgo)
 
-2.  🔑 **Configure API Keys:** Click the extension icon → Enter your Gemini or Cloud Vision API key → Click "Save Keys"
+2.  🔑 **Configure API Keys:** Click the extension icon → Enter your Gemini API key or Google Cloud Vision API key → Click "Save Keys"
 
 3.  📸 **Record CAPTCHA:** Click extension icon → "Start Recording" → Click CAPTCHA image → Click input field
 
@@ -27,9 +27,9 @@ https://github.com/user-attachments/assets/b6a6c7c8-4166-46c1-aa32-db3bab093e03
 
 ## 🔬 AI Recognition Methods Comparison
 
-| Feature              | Gemini                              | Google Cloud Vision               |
+| Feature              | Gemini                              | Google Cloud Vision AI             |
 |----------------------|-------------------------------------|------------------------------------|
-| Response Time        | 🐌 Slower    | ⚡ Faster      |
+| Response Time        | 🐌 Slower    | ⚡ Very Fast      |
 | API Key Setup        | 😊 Simple  | 😰 Complex   |
 | Accuracy             | 🎯 Higher    | 📊 Lower       |
 | Model Selection      | ✅ Yes | ❌ No |
