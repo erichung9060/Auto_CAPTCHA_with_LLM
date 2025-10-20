@@ -16,7 +16,7 @@ function showNotification(message, notificationType = 'success') {
     
     notificationText.textContent = message;
 
-    notificationBar.classList.remove('success', 'error');
+    notificationBar.classList.remove('success', 'error', 'warning', 'info');
     notificationBar.classList.add(notificationType);
     notificationBar.classList.remove('hidden', 'hiding');
 
@@ -69,13 +69,16 @@ document.getElementById('toggleAdvancedSettings').addEventListener('click', togg
 function toggleAdvancedSettings() {
     const advancedSection = document.getElementById('advancedSettingsSection');
     const toggleText = document.getElementById('advancedToggleText');
-    
+    const toggleIcon = document.getElementById('advancedToggleIcon');
+
     if (advancedSection.classList.contains('hidden')) {
         advancedSection.classList.remove('hidden');
-        toggleText.textContent = 'Hide Advanced Settings ▲';
+        toggleText.textContent = 'Hide Advanced Settings';
+        toggleIcon.style.transform = 'rotate(180deg)';
     } else {
         advancedSection.classList.add('hidden');
-        toggleText.textContent = 'Show Advanced Settings ▼';
+        toggleText.textContent = 'Show Advanced Settings';
+        toggleIcon.style.transform = 'rotate(0deg)';
     }
 }
 
@@ -125,9 +128,9 @@ async function saveCaptchaTypeSettings() {
 
 document.getElementById('startRecording').addEventListener('click', startRecording);
 async function startRecording() {
-    const startRecordingButton = document.getElementById('startRecording');
-    startRecordingButton.innerText = "Recording";
-    startRecordingButton.disabled = true;
+    const startRecordingButton = document.getElementById('startRecording').querySelector('span');
+    startRecordingButton.textContent = "Recording...";
+    document.getElementById('startRecording').disabled = true;
 
     showNotification("Please click the CAPTCHA IMAGE", "warning");
     if(tab_id) await chrome.tabs.sendMessage(tab_id, { action: "startRecording" });
@@ -136,13 +139,14 @@ async function startRecording() {
 document.getElementById('deleteRecord').addEventListener('click', deleteRecord);
 async function deleteRecord() {
     const confirmDialog = document.createElement('div');
-    confirmDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center';
+    confirmDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
     confirmDialog.innerHTML = `
-        <div class="bg-white p-4 rounded-lg shadow-lg">
-            <p class="mb-4">Are you sure you want to delete the record?</p>
-            <div class="flex justify-end space-x-2">
-                <button id="confirmYes" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Yes</button>
-                <button id="confirmNo" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">No</button>
+        <div class="bg-white p-6 rounded-xl shadow-2xl transform transition-all scale-95 hover:scale-100">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Confirm Deletion</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to delete the record for this page?</p>
+            <div class="flex justify-end space-x-3">
+                <button id="confirmNo" class="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition">Cancel</button>
+                <button id="confirmYes" class="px-5 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">Yes, Delete</button>
             </div>
         </div>
     `;
@@ -172,6 +176,7 @@ async function deleteRecord() {
         confirmDialog.remove();
     });
 }
+
 
 function findBestMatch(records, currentPath) {
     if (!records || records.length === 0) return null;
@@ -225,8 +230,10 @@ async function loadSettings() {
     if (records) {
         record_on_this_site = findBestMatch(records, pathname);
 
-        const radio = document.querySelector(`input[name="captchaType"][value="${record_on_this_site.captchaType}"]`);
-        radio.checked = true;
+        if(record_on_this_site && record_on_this_site.captchaType) {
+            const radio = document.querySelector(`input[name="captchaType"][value="${record_on_this_site.captchaType}"]`);
+            if (radio) radio.checked = true;
+        }
 
         document.getElementById('captchaTypeSection').classList.remove('hidden');
         document.getElementById('deleteRecord').classList.remove('hidden');
@@ -237,4 +244,4 @@ async function loadSettings() {
     }
 }
 
-loadSettings();
+document.addEventListener('DOMContentLoaded', loadSettings);

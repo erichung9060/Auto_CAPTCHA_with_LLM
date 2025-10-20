@@ -1,3 +1,27 @@
+/*專為新設計客製化的樣式*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.transition {
+    transition: all 0.2s ease-in-out;
+}
+
+#advancedSettingsSection {
+    transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+#advancedSettingsSection:not(.hidden) {
+    max-height: 500px; /* 足夠容納內容的高度 */
+    opacity: 1;
+}
 *,
 ::backdrop,
 :after,

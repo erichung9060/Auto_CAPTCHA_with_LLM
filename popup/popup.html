@@ -6,7 +6,7 @@
         <link href="tailwind.css" rel="stylesheet">
     </head>
     <body class="bg-gray-50">
-        <div id="body" class="w-80 shadow-xl rounded-xl overflow-hidden bg-white">
+        <div id="body" class="w-80 shadow-2xl rounded-2xl overflow-hidden bg-white font-sans">
             <div id="notification-bar" class="notification-bar hidden">
                 <div class="notification-content">
                     <div class="notification-icon">
@@ -24,76 +24,115 @@
                     </button>
                 </div>
             </div>
-            <div id="settings" class="main-content space-y-2 p-4">
-                <form class="space-y-2">
-                    <h1 class="text-xl font-semibold text-gray-800">Auto CAPTCHA with LLM</h1>
-                    <div class="space-y-1">
-                        <label for="geminiKey" class="block text-sm font-medium text-gray-600">Gemini API Key</label>
+
+            <div id="header" class="bg-gradient-to-br from-gray-700 to-gray-900 p-4 flex items-center space-x-3">
+                <img src="/icons/128x128.png" alt="Logo" class="w-12 h-12 rounded-full border-2 border-white shadow-md">
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-wide">Auto CAPTCHA</h1>
+                    <p class="text-xs text-gray-300">Powered by LLMs</p>
+                </div>
+            </div>
+
+            <div id="settings" class="main-content space-y-4 p-4">
+                <form class="space-y-3">
+                    <div class="space-y-2">
+                        <label for="geminiKey" class="text-sm font-semibold text-gray-700 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 8a6 6 0 11-12 0 6 6 0 0112 0zM8.94 6.94a.75.75 0 11-1.06-1.061l2.5-2.5a.75.75 0 011.06 0l2.5 2.5a.75.75 0 11-1.06 1.06L12 5.81V9a.75.75 0 01-1.5 0V5.81l-1.56 1.13zM6.25 10.75a.75.75 0 00-1.5 0v1.5a.75.75 0 001.5 0v-1.5z" clip-rule="evenodd" />
+                            </svg>
+                            Gemini API Key
+                        </label>
                         <input id="geminiKey" type="password" placeholder="Enter your Gemini API Key"
-                            class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            class="w-full p-2.5 bg-gray-100 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition">
                     </div>
-                    <div class="space-y-1">
-                        <label for="cloudVisionKey" class="block text-sm font-medium text-gray-600">Cloud Vision API Key</label>
+                    <div class="space-y-2">
+                        <label for="cloudVisionKey" class="text-sm font-semibold text-gray-700 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-teal-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M5.5 10.5a.5.5 0 01.5-.5h8a.5.5 0 010 1H6a.5.5 0 01-.5-.5z" />
+                                <path d="M3.5 7.5a.5.5 0 01.5-.5h4a.5.5 0 010 1h-4a.5.5 0 01-.5-.5z" />
+                            </svg>
+                            Cloud Vision API Key
+                        </label>
                         <input id="cloudVisionKey" type="password" placeholder="Enter your Cloud Vision API Key"
-                            class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            class="w-full p-2.5 bg-gray-100 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition">
                     </div>
                     <button type="submit" id="saveApiKeys"
-                        class="w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600">
-                        Save Keys
+                        class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2.5 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700 shadow-md transform hover:scale-105 transition">
+                        Save API Keys
                     </button>
                 </form>
-                <div class="space-y-2">
+
+                <div class="space-y-3 pt-2">
                     <button type="button" id="toggleAdvancedSettings"
-                        class="w-full bg-gray-500 text-white py-2 rounded-lg font-medium hover:bg-gray-600 flex items-center justify-center">
-                        <span id="advancedToggleText">Show Advanced Settings ▼</span>
+                        class="w-full bg-gray-700 text-white py-2.5 rounded-lg font-semibold hover:bg-gray-800 flex items-center justify-center transition">
+                        <span id="advancedToggleText">Show Advanced Settings</span>
+                        <svg id="advancedToggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
                     </button>
-                    <div id="advancedSettingsSection" class="hidden space-y-2">
-                        <hr>
-                        <form id="advancedSettingsForm" class="space-y-2">
-                            <h2 class="text-lg font-semibold text-gray-800">Advanced Model Settings</h2>
-                            <div class="space-y-1">
-                                <label for="customModel" class="block text-sm font-medium text-gray-600">Custom Model</label>
-                                <p class="text-xs text-gray-500">default: gemini-2.0-flash</p>
-                                <input id="customModel" type="text" placeholder="e.g., gemini-2.5-pro, gemini-2.5-flash"
-                                    class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <div id="advancedSettingsSection" class="hidden space-y-3 pt-2">
+                        <form id="advancedSettingsForm" class="space-y-3 p-3 bg-gray-100 rounded-lg">
+                            <h2 class="text-md font-bold text-gray-800 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M11.49 3.17a.75.75 0 011.02 0l4.5 4.5a.75.75 0 010 1.02l-4.5 4.5a.75.75 0 01-1.02-1.02l3.24-3.25H4.25a.75.75 0 010-1.5h10.48L11.49 4.2a.75.75 0 010-1.02z" clip-rule="evenodd" />
+                                </svg>
+                                Advanced Model Settings
+                            </h2>
+                            <div class="space-y-2">
+                                <label for="customModel" class="text-sm font-semibold text-gray-600">Custom Model</label>
+                                <p class="text-xs text-gray-500">Default: gemini-1.5-flash</p>
+                                <input id="customModel" type="text" placeholder="e.g., gemini-1.5-pro"
+                                    class="w-full p-2.5 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition">
                             </div>
                             <button type="submit" id="saveAdvancedSettings"
-                                class="w-full bg-purple-500 text-white py-2 rounded-lg font-medium hover:bg-purple-600">
+                                class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2.5 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 shadow-md transform hover:scale-105 transition">
                                 Save Advanced Settings
                             </button>
                         </form>
-                        <hr>
                     </div>
                 </div>
-                <div id="captchaTypeSection" class="hidden">
-                    <hr>
-                    <div class="space-y-2">
-                        <h2 class="text-lg font-semibold text-gray-800">CAPTCHA Type Settings</h2>
-                        <div class="space-y-2">
-                            <label class="flex items-center space-x-2">
+
+                <div id="captchaTypeSection" class="hidden pt-2">
+                    <div class="space-y-3 p-3 bg-gray-100 rounded-lg">
+                        <h2 class="text-md font-bold text-gray-800 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M17.293 3.293a1 1 0 010 1.414L16 6.414l-2.293-2.293 1.293-1.293a1 1 0 011.414 0zM14 8.414l-8.707 8.707a1 1 0 01-1.414-1.414L12.586 7 14 8.414zM4 14.586l-1.293 1.293a1 1 0 01-1.414-1.414L2.586 13 4 14.586z" />
+                            </svg>
+                            CAPTCHA Type Settings
+                        </h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-200 transition">
                                 <input type="radio" name="captchaType" value="numbersOnly" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
-                                <span class="text-sm text-gray-600">Numbers Only</span>
+                                <span class="text-sm text-gray-700 font-medium">Numbers Only</span>
                             </label>
-                            <label class="flex items-center space-x-2">
+                            <label class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-200 transition">
                                 <input type="radio" name="captchaType" value="lettersOnly" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
-                                <span class="text-sm text-gray-600">Letters Only</span>
+                                <span class="text-sm text-gray-700 font-medium">Letters Only</span>
                             </label>
-                            <label class="flex items-center space-x-2">
+                            <label class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-200 transition">
                                 <input type="radio" name="captchaType" value="auto" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" checked>
-                                <span class="text-sm text-gray-600">Auto Detect</span>
+                                <span class="text-sm text-gray-700 font-medium">Auto Detect</span>
                             </label>
                         </div>
                     </div>
-                    <hr>
                 </div>
-                <button type="button" id="startRecording"
-                    class="w-full bg-green-500 text-white py-2 rounded-lg font-medium hover:bg-green-600">
-                    Start Recording
-                </button>
-                <button type="button" id="deleteRecord"
-                    class="w-full bg-red-500 text-white py-2 rounded-lg font-medium hover:bg-red-600 hidden">
-                    Delete Record On This Page
-                </button>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button type="button" id="startRecording"
+                        class="w-full bg-gradient-to-r from-green-500 to-teal-600 text-white py-2.5 rounded-lg font-semibold hover:from-green-600 hover:to-teal-700 shadow-md transform hover:scale-105 transition flex items-center justify-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a.75.75 0 011.5 0v2.5h2.5a.75.75 0 010 1.5H9.5V13a.75.75 0 01-1.5 0V7z" clip-rule="evenodd" />
+                        </svg>
+                        <span>Start Recording</span>
+                    </button>
+                    <button type="button" id="deleteRecord"
+                        class="w-full bg-gradient-to-r from-red-500 to-orange-600 text-white py-2.5 rounded-lg font-semibold hover:from-red-600 hover:to-orange-700 shadow-md transform hover:scale-105 transition flex items-center justify-center space-x-2 hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        <span>Delete Record</span>
+                    </button>
+                </div>
             </div>
         </div>
         <script src="popup.js"></script>
