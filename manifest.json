@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "version": "2.1.1",
+    "version": "3.0.0",
     "name": "Auto CAPTCHA with LLM",
     "description": "Automatically solves numerical CAPTCHAs and fills in the verification code using LLMs (Gemini, Cloud Vision AI).",
     "content_scripts": [
