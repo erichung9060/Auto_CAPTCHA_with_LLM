@@ -106,10 +106,6 @@ function getElementSelector(element) {
         const shadowHost = element.getRootNode().host;
         const hostSelector = getElementSelector(shadowHost);
 
-        if (element.id) {
-            return `${hostSelector}::shadow-root::#${element.id}`;
-        }
-
         const shadowPathParts = buildPathParts(element, (current) =>
             current && current.getRootNode() instanceof ShadowRoot &&
             current !== element.getRootNode()
@@ -118,10 +114,6 @@ function getElementSelector(element) {
         const shadowPath = shadowPathParts.join(' > ');
         return `${hostSelector}::shadow-root::${shadowPath}`;
     } else {
-        if (element.id) {
-            return `#${element.id}`;
-        }
-
         const pathParts = buildPathParts(element, (current) =>
             current && current.nodeType === Node.ELEMENT_NODE
         );
