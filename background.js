@@ -1,6 +1,6 @@
 const CLOUD_VISION_API_ENDPOINT = 'https://vision.googleapis.com/v1/images:annotate';
 const DEFAULT_GEMINI_API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta';
-const DEFAULT_GEMINI_MODEL = 'gemini-2.0-flash';
+const DEFAULT_GEMINI_MODEL = 'gemini-flash-latest';
 
 async function recognize_by_CloudVision(base64Image, CloudVisionApiKey) {
     const apiUrl = `${CLOUD_VISION_API_ENDPOINT}?key=${CloudVisionApiKey}`;
