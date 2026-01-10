@@ -1,5 +1,6 @@
 var captchaSelector, inputSelector, captchaType;
 var captchaImage, inputField;
+const elementsWithListener = new WeakSet();
 
 
 async function getBase64Image(img) {
@@ -175,7 +176,7 @@ function findBestMatch(records, currentPath) {
 
 function deleteRecord() {
     captchaImage.removeEventListener('load', recognizeAndFill);
-    captchaImage.removeAttribute('has-recognizeAndFill-listener');
+    elementsWithListener.delete(captchaImage);
 
     inputField.value = "";
 
@@ -204,11 +205,15 @@ async function recognizeAndFill() {
 }
 
 function process() {
-    if (captchaImage.complete) recognizeAndFill();
+    captchaImage = getElementBySelector(captchaSelector);
+    inputField = getElementBySelector(inputSelector);
+    if(!captchaImage || !inputField) return;
+    
+    if (!elementsWithListener.has(captchaImage)) { // first time
+        if (captchaImage.complete) recognizeAndFill();
 
-    if (!captchaImage.hasAttribute('has-recognizeAndFill-listener')) {
         captchaImage.addEventListener('load', recognizeAndFill);
-        captchaImage.setAttribute('has-recognizeAndFill-listener', 'true');
+        elementsWithListener.add(captchaImage);
     }
 }
 
@@ -225,15 +230,6 @@ function getElementBySelector(selector) {
     return document.querySelector(selector);
 }
 
-function captchaElementExist() {
-    captchaImage = getElementBySelector(captchaSelector);
-    inputField = getElementBySelector(inputSelector);
-
-    if (captchaImage && inputField) return true;
-
-    return false;
-}
-
 async function main() {
     const hostname = window.location.hostname;
     const pathname = window.location.pathname;
@@ -248,21 +244,16 @@ async function main() {
     inputSelector = bestMatch.inputSelector;
     captchaType = bestMatch.captchaType;
 
-    if (captchaElementExist()) {
-        process();
-    } else {
-        const observer = new MutationObserver((mutations, obs) => {
-            if (captchaElementExist()) {
-                obs.disconnect();
-                process();
-            }
-        });
+    process();
 
-        observer.observe(document.documentElement, {
-            childList: true,
-            subtree: true
-        });
-    }
+    const observer = new MutationObserver((mutations, obs) => {
+        process();
+    });
+
+    observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+    });
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
