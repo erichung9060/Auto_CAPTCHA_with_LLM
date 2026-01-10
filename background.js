@@ -51,11 +51,13 @@ async function recognize_by_Gemini(base64Image, captchaType, GeminiApiKey, custo
     const model = customModel || DEFAULT_GEMINI_MODEL;
     let apiUrl = `${DEFAULT_GEMINI_API_ENDPOINT}/models/${model}:generateContent?key=${GeminiApiKey}`;
     
-    let prompt = 'Please analyze this CAPTCHA image. The image contains digits or numbers or words with some noise/distortion. Return only the CAPTCHA numbers or digits or words without any additional text or explanation.';
+    let prompt;
     if (captchaType === 'numbersOnly') {
         prompt = 'Please analyze this CAPTCHA image. The image only contains numbers/digits with some noise/distortion. Return only the CAPTCHA numbers without any additional text or explanation.';
     } else if (captchaType === 'lettersOnly') {
         prompt = 'Please analyze this CAPTCHA image. The image only contains letters/alphabetic characters with some noise/distortion. Return only the CAPTCHA letters without any additional text or explanation.';
+    } else {
+        prompt = 'Please analyze this CAPTCHA image. The image contains digits or numbers or words with some noise/distortion. Return only the CAPTCHA numbers or digits or words without any additional text or explanation.';
     }
 
     const body = {
