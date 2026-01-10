@@ -31,14 +31,23 @@ async function handleRecording() {
     let selectedInput = null;
 
     const recordingHandler = async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        
+        console.log("[Auto CAPTCHA with LLM] Clicked Element: ", event.target);
+        
         if (!selectedCaptcha) {
-            let target = event.target;
+            selectedCaptcha = event.target;
 
-            if (target.shadowRoot) {
-                const imgInShadow = target.shadowRoot.querySelector('img');
+            if(selectedCaptcha instanceof HTMLImageElement){
+                // good, do nothing
+            } else if (selectedCaptcha.shadowRoot) {
+                const imgInShadow = selectedCaptcha.shadowRoot.querySelector('img');
                 selectedCaptcha = imgInShadow;
             } else {
-                selectedCaptcha = target
+                const imgInside = selectedCaptcha.querySelector('img');
+                selectedCaptcha = imgInside;
             }
 
             console.log("[Auto CAPTCHA with LLM] Selected CAPTCHA Image: ", selectedCaptcha);
@@ -49,7 +58,6 @@ async function handleRecording() {
             } else {
                 alert("Got the CAPTCHA image successfully. Now please click the input field for the CAPTCHA code.");
             }
-
         } else {
             selectedInput = event.target;
             console.log("[Auto CAPTCHA with LLM] Selected Input Field: ", selectedInput);
