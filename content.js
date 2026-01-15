@@ -18,10 +18,10 @@ async function getBase64Image(img) {
             action: "fetchImage",
             url: img.src
         });
-        
+
         if (response && response.success) {
             return response.base64;
-        }else{
+        } else {
             return null;
         }
     }
@@ -36,13 +36,13 @@ async function handleRecording() {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        
+
         console.log("[Auto CAPTCHA with LLM] Clicked Element: ", event.target);
-        
+
         if (!selectedCaptcha) {
             selectedCaptcha = event.target;
 
-            if(selectedCaptcha instanceof HTMLImageElement){
+            if (selectedCaptcha instanceof HTMLImageElement) {
                 // good, do nothing
             } else if (selectedCaptcha.shadowRoot) {
                 const imgInShadow = selectedCaptcha.shadowRoot.querySelector('img');
@@ -189,6 +189,7 @@ function deleteRecord() {
 }
 
 async function recognizeAndFill() {
+    console.log("[Auto CAPTCHA with LLM] Start recognizing CAPTCHA...")
     let base64Image = await getBase64Image(captchaImage)
     const response = await chrome.runtime.sendMessage({
         action: "recognizeCaptcha",
@@ -208,8 +209,8 @@ async function recognizeAndFill() {
 function process() {
     captchaImage = getElementBySelector(captchaSelector);
     inputField = getElementBySelector(inputSelector);
-    if(!captchaImage || !inputField) return;
-    
+    if (!captchaImage || !inputField) return;
+
     if (!elementsWithListener.has(captchaImage)) { // first time
         if (captchaImage.complete) recognizeAndFill();
 
