@@ -28,6 +28,7 @@ async function getBase64Image(img) {
 }
 
 async function handleRecording() {
+    console.log("[Auto CAPTCHA with LLM] Starting recording...");
     let selectedCaptcha = null;
     let selectedInput = null;
 
