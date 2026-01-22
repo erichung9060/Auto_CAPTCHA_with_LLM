@@ -194,8 +194,14 @@ function deleteRecord() {
 }
 
 async function recognizeAndFill() {
-    console.log("[Auto CAPTCHA with LLM] Start recognizing CAPTCHA...")
-    let base64Image = await getBase64Image(captchaImage)
+    console.log("[Auto CAPTCHA with LLM] Start recognizing CAPTCHA...");
+    let base64Image = await getBase64Image(captchaImage);
+
+    if (base64Image.length < 300) {
+        console.log("[Auto CAPTCHA with LLM] Captcha image base64 is blank or trivial, skipping recognition.");
+        return;
+    }
+
     const response = await chrome.runtime.sendMessage({
         action: "recognizeCaptcha",
         image: base64Image,
@@ -206,7 +212,7 @@ async function recognizeAndFill() {
         console.log("[Auto CAPTCHA with LLM] CAPTCHA recognized successfully:", response.verificationCode);
         inputField.value = response.verificationCode;
     } else {
-        console.error("Backend Error: ", response.error)
+        console.error("Backend Error: ", response.error);
         inputField.value = "";
     }
 }
