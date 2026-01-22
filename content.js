@@ -10,6 +10,11 @@ async function getBase64Image(img) {
         canvas.height = img.naturalHeight;
 
         const ctx = canvas.getContext('2d');
+
+        // Fill white background to handle transparent images
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
         ctx.drawImage(img, 0, 0);
 
         return canvas.toDataURL('image/png').split(',')[1];
