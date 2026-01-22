@@ -88,6 +88,10 @@ async function recognize_by_Gemini(base64Image, captchaType, GeminiApiKey, custo
 
         if (data.error) return { isSuccess: false, error: data.error.message }
 
+        if (!data.candidates[0].content.parts) {
+            return { isSuccess: false, error: "No text detected in image." }
+        }
+
         let verificationCode = data.candidates[0].content.parts[0].text.trim();
 
         const alpnum_matches = verificationCode.match(/[a-zA-Z0-9]+/g);

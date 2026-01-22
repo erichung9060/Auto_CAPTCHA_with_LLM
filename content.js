@@ -217,6 +217,8 @@ function process() {
     if (!captchaImage || !inputField) return;
 
     if (!elementsWithListener.has(captchaImage)) { // first time
+        console.log("[Auto CAPTCHA with LLM] get captchaImage:", captchaImage);
+        console.log("[Auto CAPTCHA with LLM] get inputField:", inputField);
         if (captchaImage.complete) recognizeAndFill();
 
         captchaImage.addEventListener('load', recognizeAndFill);
