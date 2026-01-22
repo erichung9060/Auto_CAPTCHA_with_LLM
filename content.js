@@ -6,16 +6,24 @@ const elementsWithListener = new WeakSet();
 async function getBase64Image(img) {
     try {
         const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
+        // suport <img> and <input type="image">
+        let width, height;
+        if (img instanceof HTMLImageElement) {
+            width = img.naturalWidth;
+            height = img.naturalHeight;
+        } else if (img instanceof HTMLInputElement && img.type === "image") {
+            width = img.width;
+            height = img.height;
+        } else {
+            throw new Error("Unsupported element for getBase64Image");
+        }
+        canvas.width = width;
+        canvas.height = height;
 
         const ctx = canvas.getContext('2d');
-
-        // Fill white background to handle transparent images
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, width, height);
 
         return canvas.toDataURL('image/png').split(',')[1];
     } catch (e) {
@@ -47,19 +55,22 @@ async function handleRecording() {
         if (!selectedCaptcha) {
             selectedCaptcha = event.target;
 
-            if (selectedCaptcha instanceof HTMLImageElement) {
+            // Support <img> and <input type="image"> as CAPTCHA images
+            if (selectedCaptcha instanceof HTMLImageElement ||
+                (selectedCaptcha instanceof HTMLInputElement && selectedCaptcha.type === "image")) {
                 // good, do nothing
             } else if (selectedCaptcha.shadowRoot) {
-                const imgInShadow = selectedCaptcha.shadowRoot.querySelector('img');
+                const imgInShadow = selectedCaptcha.shadowRoot.querySelector('img, input[type="image"]');
                 selectedCaptcha = imgInShadow;
             } else {
-                const imgInside = selectedCaptcha.querySelector('img');
+                const imgInside = selectedCaptcha.querySelector('img, input[type="image"]');
                 selectedCaptcha = imgInside;
             }
 
             console.log("[Auto CAPTCHA with LLM] Selected CAPTCHA Image: ", selectedCaptcha);
 
-            if (!(selectedCaptcha instanceof HTMLImageElement)) {
+            if (!(selectedCaptcha instanceof HTMLImageElement ||
+                  (selectedCaptcha instanceof HTMLInputElement && selectedCaptcha.type === "image"))) {
                 alert("Please select a valid CAPTCHA image.");
                 selectedCaptcha = null;
             } else {
@@ -196,8 +207,7 @@ function deleteRecord() {
 async function recognizeAndFill() {
     console.log("[Auto CAPTCHA with LLM] Start recognizing CAPTCHA...");
     let base64Image = await getBase64Image(captchaImage);
-
-    if (base64Image.length < 300) {
+    if (!base64Image || base64Image.length < 300) {
         console.log("[Auto CAPTCHA with LLM] Captcha image base64 is blank or trivial, skipping recognition.");
         return;
     }
@@ -225,8 +235,10 @@ function process() {
     if (!elementsWithListener.has(captchaImage)) { // first time
         console.log("[Auto CAPTCHA with LLM] get captchaImage:", captchaImage);
         console.log("[Auto CAPTCHA with LLM] get inputField:", inputField);
-        if (captchaImage.complete) recognizeAndFill();
-
+        if ((captchaImage instanceof HTMLImageElement && captchaImage.complete) ||
+            (captchaImage instanceof HTMLInputElement && captchaImage.type === "image")) {
+            recognizeAndFill();
+        }
         captchaImage.addEventListener('load', recognizeAndFill);
         elementsWithListener.add(captchaImage);
     }
