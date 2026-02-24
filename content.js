@@ -70,7 +70,7 @@ async function handleRecording() {
             console.log("[Auto CAPTCHA with LLM] Selected CAPTCHA Image: ", selectedCaptcha);
 
             if (!(selectedCaptcha instanceof HTMLImageElement ||
-                  (selectedCaptcha instanceof HTMLInputElement && selectedCaptcha.type === "image"))) {
+                (selectedCaptcha instanceof HTMLInputElement && selectedCaptcha.type === "image"))) {
                 alert("Please select a valid CAPTCHA image.");
                 selectedCaptcha = null;
             } else {
@@ -220,7 +220,15 @@ async function recognizeAndFill() {
 
     if (response.isSuccess) {
         console.log("[Auto CAPTCHA with LLM] CAPTCHA recognized successfully:", response.verificationCode);
-        inputField.value = response.verificationCode;
+
+        // Use native setter to write value, bypassing possible hijacking of the value property by frameworks
+        let nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        nativeInputValueSetter.call(inputField, response.verificationCode);
+
+        // Dispatch multiple events to ensure frameworks can detect the change
+        inputField.dispatchEvent(new Event('input', { bubbles: true }));
+        inputField.dispatchEvent(new Event('change', { bubbles: true }));
+        inputField.dispatchEvent(new Event('blur', { bubbles: true }));
     } else {
         console.error("Backend Error: ", response.error);
         inputField.value = "";
